@@ -6,7 +6,7 @@ import Link from 'next/link'
 function getMonthOptions() {
   const options = []
   const now = new Date()
-  for (let i = -2; i <= 6; i++) {
+  for (let i = 0; i <= 6; i++) {
     const d = new Date(now.getFullYear(), now.getMonth() + i, 1)
     options.push({
       value: d.toISOString().slice(0, 7),

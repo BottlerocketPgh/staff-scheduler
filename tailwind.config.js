@@ -4,11 +4,12 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        rust:   { DEFAULT: '#C15B38', dark: '#A34E2E', light: '#D4735A' },
-        honey:  { DEFAULT: '#D4A94C', dark: '#B8912E', light: '#E0BC70' },
-        steel:  { DEFAULT: '#5C7FA8', dark: '#4A6A8F', light: '#7395BA' },
-        cream:  '#EDE3CC',
-        forest: { DEFAULT: '#2B3830', dark: '#141C17', light: '#3A4E42' },
+        rust:   { DEFAULT: '#d36a4a', dark: '#b55a3c', light: '#e08468' },
+        honey:  { DEFAULT: '#f0c171', dark: '#d4a84e', light: '#f5d390' },
+        steel:  { DEFAULT: '#4f7bb2', dark: '#3d6499', light: '#6e95c8' },
+        cream:  '#e5dcc5',
+        forest: { DEFAULT: '#3b413c', dark: '#1e2320', light: '#4d5550' },
+        white:  '#ffffff',
       },
     },
   },

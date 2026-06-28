@@ -26,7 +26,7 @@ type MonthData = Record<string, DayData>
 function getMonthOptions() {
   const options = []
   const now = new Date()
-  for (let i = -3; i <= 6; i++) {
+  for (let i = 0; i <= 6; i++) {
     const d = new Date(now.getFullYear(), now.getMonth() + i, 1)
     options.push({
       value: d.toISOString().slice(0, 7),
@@ -34,6 +34,11 @@ function getMonthOptions() {
     })
   }
   return options
+}
+
+function monthLabel(month: string) {
+  const [y, m] = month.split('-').map(Number)
+  return new Date(y, m - 1, 1).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
 }
 
 function fmtDateLong(dateStr: string) {
@@ -203,7 +208,7 @@ function ScheduleTab() {
             disabled={sending}
             className="bg-rust hover:bg-rust-dark text-cream text-sm px-4 py-2 rounded-lg font-medium disabled:opacity-50 transition-colors"
           >
-            {sending ? 'Sending...' : 'Send schedule emails'}
+            {sending ? 'Sending...' : `Send Confirmed Schedule — ${monthLabel(month)}`}
           </button>
           {submissions.length > 0 && (
             <div className="flex items-center gap-2">
