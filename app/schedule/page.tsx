@@ -53,49 +53,44 @@ export default function SchedulePage() {
 
   return (
     <main className="max-w-lg mx-auto px-4 py-10">
-      <a href="/" className="text-gray-500 text-sm hover:text-gray-300 mb-6 inline-block">
+      <a href="/" className="text-cream/40 text-sm hover:text-cream/70 mb-6 inline-block transition-colors">
         ← Back
       </a>
       <div className="flex items-center justify-between mb-6 gap-3 flex-wrap">
-        <h1 className="text-xl font-bold">Schedule</h1>
+        <h1 className="text-xl font-bold text-cream">Schedule</h1>
         <div className="flex items-center gap-2">
           <Link
             href="/availability"
-            className="text-sm bg-amber-700 hover:bg-amber-600 text-white px-3 py-1.5 rounded-lg transition-colors font-medium"
+            className="text-sm bg-rust hover:bg-rust-dark text-cream px-3 py-1.5 rounded-lg transition-colors font-medium"
           >
             Submit availability
           </Link>
           <select
-            className="bg-gray-800 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-amber-500"
+            className="bg-forest border border-forest-light/30 rounded-lg px-3 py-2 text-sm text-cream outline-none focus:ring-2 focus:ring-rust"
             value={month}
             onChange={(e) => setMonth(e.target.value)}
           >
             {monthOptions.map((o) => (
-              <option key={o.value} value={o.value}>
-                {o.label}
-              </option>
+              <option key={o.value} value={o.value}>{o.label}</option>
             ))}
           </select>
         </div>
       </div>
 
       {loading ? (
-        <div className="text-gray-500 text-center py-12">Loading...</div>
+        <div className="text-cream/40 text-center py-12">Loading...</div>
       ) : (
         <>
           <div className="grid grid-cols-7 mb-1">
             {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((d) => (
-              <div key={d} className="text-center text-xs text-gray-500 py-1">
-                {d}
-              </div>
+              <div key={d} className="text-center text-xs text-cream/40 py-1">{d}</div>
             ))}
           </div>
           <div className="space-y-1">
             {weeks.map((week, wi) => (
               <div key={wi} className="grid grid-cols-7 gap-1">
                 {week.map((date, di) => {
-                  if (!date)
-                    return <div key={`e-${wi}-${di}`} className="aspect-square" />
+                  if (!date) return <div key={`e-${wi}-${di}`} className="aspect-square" />
                   const assigned = assignments[date]
                   const isToday = date === today
                   const isPast = date < today
@@ -106,21 +101,19 @@ export default function SchedulePage() {
                       className={[
                         'aspect-square rounded-lg p-1.5 flex flex-col',
                         isToday
-                          ? 'bg-amber-900/30 border border-amber-700/40'
+                          ? 'bg-rust/20 border border-rust/40'
                           : isPast
-                            ? 'bg-gray-900/40'
-                            : 'bg-gray-800',
+                            ? 'bg-forest/40'
+                            : assigned
+                              ? 'bg-forest border border-honey/20'
+                              : 'bg-forest',
                       ].join(' ')}
                     >
-                      <span
-                        className={`text-xs leading-none ${isPast ? 'text-gray-600' : 'text-gray-400'}`}
-                      >
+                      <span className={`text-xs leading-none ${isPast && !assigned ? 'text-cream/25' : 'text-cream/50'}`}>
                         {dayNum}
                       </span>
                       {assigned && (
-                        <span
-                          className={`text-[10px] font-semibold leading-tight mt-auto truncate ${isPast ? 'text-gray-600' : 'text-amber-400'}`}
-                        >
+                        <span className={`text-[10px] font-semibold leading-tight mt-auto truncate ${isPast ? 'text-cream/30' : 'text-honey'}`}>
                           {assigned.split(' ')[0]}
                         </span>
                       )}

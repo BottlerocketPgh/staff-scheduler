@@ -61,10 +61,10 @@ function getCalendarWeeks(month: string): (string | null)[][] {
 
 function ConfirmBadge({ status }: { status: string }) {
   if (status === 'confirmed')
-    return <span className="text-xs px-1.5 py-0.5 rounded bg-green-800 text-green-200">✓ Confirmed</span>
+    return <span className="text-xs px-1.5 py-0.5 rounded bg-steel text-steel-light">✓ Confirmed</span>
   if (status === 'cancelled')
     return <span className="text-xs px-1.5 py-0.5 rounded bg-red-900 text-red-300">✗ Cancelled</span>
-  return <span className="text-xs px-1.5 py-0.5 rounded bg-gray-700 text-gray-400">Reminder sent</span>
+  return <span className="text-xs px-1.5 py-0.5 rounded bg-forest-light text-cream/50">Reminder sent</span>
 }
 
 // ── Password gate ──────────────────────────────────────────────────────────────
@@ -90,21 +90,22 @@ function PasswordGate({ onAuth }: { onAuth: () => void }) {
 
   return (
     <main className="max-w-sm mx-auto pt-32 px-6">
-      <h1 className="text-xl font-bold mb-6 text-center">Admin</h1>
+      <p className="text-cream/30 text-xs tracking-widest uppercase mb-1">FlightDeck · Bottlerocket</p>
+      <h1 className="text-xl font-bold mb-6 text-center text-cream">Admin</h1>
       <form onSubmit={submit} className="space-y-3">
         <input
           type="password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           placeholder="Password"
-          className="w-full bg-gray-800 rounded-lg px-4 py-2.5 outline-none focus:ring-2 focus:ring-amber-500"
+          className="w-full bg-forest rounded-lg px-4 py-2.5 outline-none focus:ring-2 focus:ring-rust"
           autoFocus
         />
         {error && <p className="text-red-400 text-sm">{error}</p>}
         <button
           type="submit"
           disabled={loading || !password}
-          className="w-full bg-amber-600 hover:bg-amber-500 text-white py-2.5 rounded-lg font-medium disabled:opacity-40 transition-colors"
+          className="w-full bg-rust hover:bg-rust-dark text-cream py-2.5 rounded-lg font-medium disabled:opacity-40 transition-colors"
         >
           {loading ? 'Checking...' : 'Enter'}
         </button>
@@ -200,35 +201,35 @@ function ScheduleTab() {
           <button
             onClick={sendSchedule}
             disabled={sending}
-            className="bg-amber-700 hover:bg-amber-600 text-white text-sm px-4 py-2 rounded-lg font-medium disabled:opacity-50 transition-colors"
+            className="bg-rust hover:bg-rust-dark text-cream text-sm px-4 py-2 rounded-lg font-medium disabled:opacity-50 transition-colors"
           >
             {sending ? 'Sending...' : 'Send schedule emails'}
           </button>
           {submissions.length > 0 && (
             <div className="flex items-center gap-2">
-              <span className="text-sm text-gray-400">
+              <span className="text-sm text-cream/50">
                 {submissions.length} submitted
               </span>
               <button
                 onClick={unlockAll}
                 disabled={unlocking}
-                className="text-xs text-gray-500 hover:text-gray-300 underline disabled:opacity-50"
+                className="text-xs text-cream/40 hover:text-cream/70 underline disabled:opacity-50"
               >
                 {unlocking ? 'Unlocking...' : 'Unlock all'}
               </button>
             </div>
           )}
           {sendResult && (
-            <span className="text-sm text-gray-400">
+            <span className="text-sm text-cream/50">
               Sent to {sendResult.sent}.
               {sendResult.missing.length > 0 && (
-                <span className="text-yellow-500"> Missing email: {sendResult.missing.join(', ')}</span>
+                <span className="text-honey"> Missing email: {sendResult.missing.join(', ')}</span>
               )}
             </span>
           )}
         </div>
         <select
-          className="bg-gray-800 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-amber-500"
+          className="bg-forest rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-rust"
           value={month}
           onChange={(e) => setMonth(e.target.value)}
         >
@@ -239,13 +240,13 @@ function ScheduleTab() {
       </div>
 
       {loading ? (
-        <div className="text-gray-500 text-center py-12">Loading...</div>
+        <div className="text-cream/40 text-center py-12">Loading...</div>
       ) : (
         <>
           {/* Calendar grid */}
           <div className="grid grid-cols-7 mb-1">
             {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((d) => (
-              <div key={d} className="text-center text-xs text-gray-500 py-1">{d}</div>
+              <div key={d} className="text-center text-xs text-cream/40 py-1">{d}</div>
             ))}
           </div>
           <div className="space-y-1 mb-4">
@@ -267,28 +268,28 @@ function ScheduleTab() {
                       className={[
                         'aspect-square rounded-lg p-1.5 flex flex-col text-left transition-colors',
                         isSelected
-                          ? 'ring-2 ring-amber-500 bg-gray-700'
+                          ? 'ring-2 ring-rust bg-forest-light'
                           : isCancelled
                             ? 'bg-red-950/50 hover:bg-red-950'
                             : day?.assigned
-                              ? 'bg-amber-900/30 hover:bg-amber-900/50'
+                              ? 'bg-rust/10 hover:bg-rust/20'
                               : isToday
-                                ? 'bg-amber-900/20 border border-amber-700/40 hover:bg-amber-900/30'
+                                ? 'bg-rust/10 border border-rust/30 hover:bg-rust/20'
                                 : isPast
-                                  ? 'bg-gray-900/40 hover:bg-gray-900/60'
-                                  : 'bg-gray-800 hover:bg-gray-700',
+                                  ? 'bg-forest-dark/40 hover:bg-forest-dark/60'
+                                  : 'bg-forest hover:bg-forest-light',
                       ].join(' ')}
                     >
-                      <span className={`text-xs leading-none ${isPast && !day?.assigned ? 'text-gray-600' : 'text-gray-400'}`}>
+                      <span className={`text-xs leading-none ${isPast && !day?.assigned ? 'text-cream/25' : 'text-cream/50'}`}>
                         {dayNum}
                       </span>
                       {day?.assigned && (
-                        <span className={`text-[10px] font-semibold leading-tight mt-auto truncate ${isCancelled ? 'text-red-400' : isPast ? 'text-gray-500' : 'text-amber-400'}`}>
+                        <span className={`text-[10px] font-semibold leading-tight mt-auto truncate ${isCancelled ? 'text-red-400' : isPast ? 'text-cream/40' : 'text-honey'}`}>
                           {day.assigned.split(' ')[0]}
                         </span>
                       )}
                       {!day?.assigned && (day?.available?.length ?? 0) > 0 && (
-                        <span className="mt-auto text-[8px] text-gray-600">
+                        <span className="mt-auto text-[8px] text-cream/25">
                           {day.available.length} avail
                         </span>
                       )}
@@ -305,23 +306,23 @@ function ScheduleTab() {
               'rounded-xl p-4 border',
               selected.confirmStatus === 'cancelled'
                 ? 'bg-red-950/40 border-red-800/40'
-                : 'bg-gray-800 border-gray-700',
+                : 'bg-forest border-forest-light/30',
             ].join(' ')}>
               <div className="flex items-start justify-between mb-3">
-                <h2 className="font-semibold text-gray-100">{fmtDateLong(selectedDate)}</h2>
+                <h2 className="font-semibold text-cream">{fmtDateLong(selectedDate)}</h2>
                 <button
                   onClick={() => setSelectedDate(null)}
-                  className="text-gray-500 hover:text-gray-300 text-lg leading-none"
+                  className="text-cream/40 hover:text-cream/70 text-lg leading-none"
                 >
                   ✕
                 </button>
               </div>
 
               {selected.available.length === 0 ? (
-                <p className="text-sm text-gray-600">No one marked as available.</p>
+                <p className="text-sm text-cream/25">No one marked as available.</p>
               ) : (
                 <div>
-                  <p className="text-xs text-gray-500 mb-2">Available — click to assign:</p>
+                  <p className="text-xs text-cream/40 mb-2">Available — click to assign:</p>
                   <div className="flex flex-wrap gap-1.5">
                     {selected.available.map((s) => {
                       const isAssigned = selected.assigned === s.name
@@ -333,14 +334,14 @@ function ScheduleTab() {
                           className={[
                             'flex items-center gap-1 text-sm px-3 py-1.5 rounded-full font-medium transition-colors disabled:opacity-60',
                             isAssigned
-                              ? 'bg-amber-600 text-white'
-                              : 'bg-gray-700 text-gray-300 hover:bg-gray-600',
+                              ? 'bg-rust text-cream'
+                              : 'bg-forest-light text-cream/70 hover:bg-forest-light',
                           ].join(' ')}
                         >
                           {isAssigned && <span>✓</span>}
                           {s.name}
                           {s.is_new && (
-                            <span className="text-yellow-400 text-[10px] font-bold">NEW</span>
+                            <span className="text-honey text-[10px] font-bold">NEW</span>
                           )}
                         </button>
                       )
@@ -350,9 +351,9 @@ function ScheduleTab() {
               )}
 
               {selected.assigned && (
-                <div className="mt-3 pt-3 border-t border-gray-700 flex items-center gap-2">
-                  <span className="text-sm text-gray-400">Assigned:</span>
-                  <span className="text-sm text-amber-400 font-medium">{selected.assigned}</span>
+                <div className="mt-3 pt-3 border-t border-forest-light/30 flex items-center gap-2">
+                  <span className="text-sm text-cream/50">Assigned:</span>
+                  <span className="text-sm text-honey font-medium">{selected.assigned}</span>
                   {selected.confirmStatus && <ConfirmBadge status={selected.confirmStatus} />}
                 </div>
               )}
@@ -431,16 +432,16 @@ function StaffTab() {
     })
   }
 
-  if (loading) return <div className="text-gray-500 text-center py-12">Loading...</div>
+  if (loading) return <div className="text-cream/40 text-center py-12">Loading...</div>
 
   return (
     <div>
-      <p className="text-sm text-gray-500 mb-4">
+      <p className="text-sm text-cream/40 mb-4">
         Priority 1 = highest. Use ↑↓ to reorder. Add email addresses so staff receive schedule
         notifications and shift reminders.
       </p>
       {staff.length === 0 ? (
-        <div className="text-gray-600 text-center py-10">
+        <div className="text-cream/25 text-center py-10">
           No staff yet — they&apos;ll appear here once someone submits availability.
         </div>
       ) : (
@@ -450,15 +451,15 @@ function StaffTab() {
               key={s.id}
               className={[
                 'flex items-center gap-3 rounded-xl px-4 py-3',
-                s.is_new ? 'bg-yellow-900/20 border border-yellow-700/30' : 'bg-gray-800',
+                s.is_new ? 'bg-honey/10 border border-honey/30' : 'bg-forest',
               ].join(' ')}
             >
-              <span className="text-gray-600 text-sm w-5 text-right shrink-0">{idx + 1}</span>
+              <span className="text-cream/25 text-sm w-5 text-right shrink-0">{idx + 1}</span>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-1">
                   <span className="font-medium truncate">{s.name}</span>
                   {s.is_new && (
-                    <span className="text-xs bg-yellow-600 text-white px-1.5 py-0.5 rounded shrink-0">
+                    <span className="text-xs bg-honey text-cream px-1.5 py-0.5 rounded shrink-0">
                       NEW
                     </span>
                   )}
@@ -468,7 +469,7 @@ function StaffTab() {
                   defaultValue={s.email ?? ''}
                   onBlur={(e) => saveEmail(s.id, e.target.value)}
                   placeholder="email@example.com"
-                  className="text-xs bg-gray-700 rounded px-2 py-1 text-gray-300 w-full max-w-[220px] outline-none focus:ring-1 focus:ring-amber-500 placeholder-gray-600"
+                  className="text-xs bg-forest-light rounded px-2 py-1 text-cream/70 w-full max-w-[220px] outline-none focus:ring-1 focus:ring-rust placeholder-cream/30"
                 />
               </div>
               <div className="flex items-center gap-2 shrink-0">
@@ -476,7 +477,7 @@ function StaffTab() {
                   <button
                     onClick={() => confirm(s.id)}
                     disabled={working}
-                    className="text-xs bg-green-700 hover:bg-green-600 text-white px-2.5 py-1 rounded-lg transition-colors disabled:opacity-50"
+                    className="text-xs bg-steel hover:bg-steel-dark text-cream px-2.5 py-1 rounded-lg transition-colors disabled:opacity-50"
                   >
                     Confirm
                   </button>
@@ -484,21 +485,21 @@ function StaffTab() {
                 <button
                   onClick={() => move(s.id, 'up')}
                   disabled={working || idx === 0}
-                  className="text-gray-400 hover:text-white disabled:opacity-20 text-lg leading-none px-1"
+                  className="text-cream/50 hover:text-cream disabled:opacity-20 text-lg leading-none px-1"
                 >
                   ↑
                 </button>
                 <button
                   onClick={() => move(s.id, 'down')}
                   disabled={working || idx === staff.length - 1}
-                  className="text-gray-400 hover:text-white disabled:opacity-20 text-lg leading-none px-1"
+                  className="text-cream/50 hover:text-cream disabled:opacity-20 text-lg leading-none px-1"
                 >
                   ↓
                 </button>
                 <button
                   onClick={() => deactivate(s.id, s.name)}
                   disabled={working}
-                  className="text-gray-600 hover:text-red-400 text-sm disabled:opacity-50 transition-colors ml-1"
+                  className="text-cream/25 hover:text-red-400 text-sm disabled:opacity-50 transition-colors ml-1"
                 >
                   ✕
                 </button>
@@ -552,33 +553,33 @@ function RequestsTab() {
     setWorking(null)
   }
 
-  if (loading) return <div className="text-gray-500 text-center py-12">Loading...</div>
+  if (loading) return <div className="text-cream/40 text-center py-12">Loading...</div>
 
   return (
     <div>
       {requests.length === 0 ? (
-        <div className="text-gray-600 text-center py-10">No pending time-off requests.</div>
+        <div className="text-cream/25 text-center py-10">No pending time-off requests.</div>
       ) : (
         <div className="space-y-2">
           {requests.map((r) => (
-            <div key={r.id} className="bg-gray-800 rounded-xl px-4 py-3 flex items-start gap-4">
+            <div key={r.id} className="bg-forest rounded-xl px-4 py-3 flex items-start gap-4">
               <div className="flex-1 min-w-0">
                 <div className="font-medium">{r.staff_name}</div>
-                <div className="text-sm text-amber-400">{fmtDateShort(r.date)}</div>
-                {r.note && <div className="text-xs text-gray-400 mt-0.5">{r.note}</div>}
+                <div className="text-sm text-honey">{fmtDateShort(r.date)}</div>
+                {r.note && <div className="text-xs text-cream/50 mt-0.5">{r.note}</div>}
               </div>
               <div className="flex gap-2 shrink-0">
                 <button
                   onClick={() => respond(r.id, 'approved')}
                   disabled={working === r.id}
-                  className="text-xs bg-green-700 hover:bg-green-600 text-white px-3 py-1.5 rounded-lg transition-colors disabled:opacity-50"
+                  className="text-xs bg-steel hover:bg-steel-dark text-cream px-3 py-1.5 rounded-lg transition-colors disabled:opacity-50"
                 >
                   Approve
                 </button>
                 <button
                   onClick={() => respond(r.id, 'denied')}
                   disabled={working === r.id}
-                  className="text-xs bg-gray-700 hover:bg-gray-600 text-gray-300 px-3 py-1.5 rounded-lg transition-colors disabled:opacity-50"
+                  className="text-xs bg-forest-light hover:bg-forest-light text-cream/70 px-3 py-1.5 rounded-lg transition-colors disabled:opacity-50"
                 >
                   Deny
                 </button>
@@ -612,7 +613,8 @@ export default function AdminPage() {
 
   return (
     <main className="max-w-2xl mx-auto px-4 py-10">
-      <h1 className="text-xl font-bold mb-6">Admin</h1>
+      <p className="text-cream/30 text-xs tracking-widest uppercase mb-1">FlightDeck · Bottlerocket</p>
+      <h1 className="text-xl font-bold text-cream mb-6">Admin</h1>
       <div className="flex gap-2 mb-6">
         {(['schedule', 'staff', 'requests'] as const).map((t) => (
           <button
@@ -620,7 +622,7 @@ export default function AdminPage() {
             onClick={() => setTab(t)}
             className={[
               'px-4 py-2 rounded-lg text-sm font-medium capitalize transition-colors',
-              tab === t ? 'bg-amber-600 text-white' : 'bg-gray-800 text-gray-400 hover:text-white',
+              tab === t ? 'bg-rust text-cream' : 'bg-forest text-cream/50 hover:text-cream',
             ].join(' ')}
           >
             {t}

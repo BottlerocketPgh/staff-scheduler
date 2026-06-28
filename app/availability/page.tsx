@@ -120,18 +120,18 @@ export default function AvailabilityPage() {
 
   return (
     <main className="max-w-md mx-auto px-4 py-10">
-      <a href="/" className="text-gray-500 text-sm hover:text-gray-300 mb-6 inline-block">
+      <a href="/" className="text-cream/40 text-sm hover:text-cream/70 mb-6 inline-block transition-colors">
         ← Back
       </a>
-      <h1 className="text-xl font-bold mb-6">My Availability</h1>
+      <h1 className="text-xl font-bold mb-6 text-cream">My Availability</h1>
 
       {!confirmedName ? (
         <div className="space-y-4">
           <div>
-            <label className="block text-sm text-gray-400 mb-1.5">Your name</label>
+            <label className="block text-sm text-cream/60 mb-1.5">Your name</label>
             <div className="relative">
               <input
-                className="w-full bg-gray-800 rounded-lg px-4 py-2.5 outline-none focus:ring-2 focus:ring-amber-500"
+                className="w-full bg-forest rounded-lg px-4 py-2.5 text-cream outline-none focus:ring-2 focus:ring-rust border border-forest-light/30 placeholder-cream/30"
                 value={nameInput}
                 onChange={(e) => { setNameInput(e.target.value); setShowSuggestions(true) }}
                 onFocus={() => setShowSuggestions(true)}
@@ -141,11 +141,11 @@ export default function AvailabilityPage() {
                 autoFocus
               />
               {showSuggestions && suggestions.length > 0 && (
-                <ul className="absolute z-10 w-full bg-gray-800 border border-gray-700 rounded-lg mt-1 shadow-lg overflow-hidden">
+                <ul className="absolute z-10 w-full bg-forest border border-forest-light/40 rounded-lg mt-1 shadow-xl overflow-hidden">
                   {suggestions.map((s) => (
                     <li
                       key={s}
-                      className="px-4 py-2.5 hover:bg-gray-700 cursor-pointer text-sm"
+                      className="px-4 py-2.5 hover:bg-forest-light cursor-pointer text-sm text-cream"
                       onMouseDown={() => confirmName(s)}
                     >
                       {s}
@@ -156,7 +156,7 @@ export default function AvailabilityPage() {
             </div>
           </div>
           <button
-            className="bg-amber-600 hover:bg-amber-500 text-white px-5 py-2.5 rounded-lg font-medium disabled:opacity-40 transition-colors"
+            className="bg-rust hover:bg-rust-dark text-cream px-5 py-2.5 rounded-lg font-medium disabled:opacity-40 transition-colors"
             disabled={!nameInput.trim() || confirming}
             onClick={() => confirmName(nameInput)}
           >
@@ -167,16 +167,16 @@ export default function AvailabilityPage() {
         <div>
           <div className="flex items-center justify-between mb-5">
             <div className="flex items-center gap-2">
-              <span className="text-gray-200 font-medium">{confirmedName}</span>
+              <span className="text-cream font-medium">{confirmedName}</span>
               <button
-                className="text-xs text-gray-500 hover:text-gray-300 underline"
+                className="text-xs text-cream/40 hover:text-cream/70 underline transition-colors"
                 onClick={() => { setConfirmedName(''); setNameInput(''); setSelectedDates(new Set()); setIsSubmitted(false) }}
               >
                 change
               </button>
             </div>
             <select
-              className="bg-gray-800 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-amber-500"
+              className="bg-forest border border-forest-light/30 rounded-lg px-3 py-2 text-sm text-cream outline-none focus:ring-2 focus:ring-rust"
               value={month}
               onChange={(e) => setMonth(e.target.value)}
             >
@@ -186,20 +186,19 @@ export default function AvailabilityPage() {
             </select>
           </div>
 
-          {/* Submitted banner */}
           {isSubmitted && (
-            <div className="bg-green-900/30 border border-green-700/40 rounded-lg px-4 py-3 mb-4 text-sm text-green-300">
+            <div className="bg-steel/10 border border-steel/30 rounded-lg px-4 py-3 mb-4 text-sm text-steel-light">
               ✓ Availability submitted for {monthLabel(month)}. Your dates are locked until the schedule is published.
             </div>
           )}
 
           {loadingDates ? (
-            <div className="text-gray-500 text-center py-12">Loading...</div>
+            <div className="text-cream/40 text-center py-12">Loading...</div>
           ) : (
             <>
               <div className="grid grid-cols-7 gap-1 mb-1">
                 {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map((d) => (
-                  <div key={d} className="text-center text-xs text-gray-500 py-1">{d}</div>
+                  <div key={d} className="text-center text-xs text-cream/40 py-1">{d}</div>
                 ))}
               </div>
               <div className="grid grid-cols-7 gap-1">
@@ -216,11 +215,11 @@ export default function AvailabilityPage() {
                         'aspect-square rounded-lg text-sm font-medium transition-colors',
                         active
                           ? isSubmitted
-                            ? 'bg-green-800/60 text-green-200 cursor-default'
-                            : 'bg-amber-600 text-white hover:bg-amber-500'
+                            ? 'bg-steel/20 text-steel-light border border-steel/30 cursor-default'
+                            : 'bg-rust text-cream hover:bg-rust-dark'
                           : isSubmitted
-                            ? 'bg-gray-900/40 text-gray-600 cursor-default'
-                            : 'bg-gray-800 text-gray-300 hover:bg-gray-700',
+                            ? 'bg-forest/60 text-cream/20 cursor-default'
+                            : 'bg-forest text-cream/70 hover:bg-forest-light',
                         busy ? 'opacity-50' : '',
                         'disabled:cursor-default',
                       ].join(' ')}
@@ -236,11 +235,11 @@ export default function AvailabilityPage() {
                   <button
                     onClick={submitAvailability}
                     disabled={submitting || selectedDates.size === 0}
-                    className="w-full bg-amber-600 hover:bg-amber-500 text-white py-3 rounded-lg font-semibold disabled:opacity-40 transition-colors"
+                    className="w-full bg-rust hover:bg-rust-dark text-cream py-3 rounded-lg font-semibold disabled:opacity-40 transition-colors"
                   >
                     {submitting ? 'Submitting...' : `Submit availability for ${monthLabel(month)}`}
                   </button>
-                  <p className="text-xs text-gray-600 text-center">
+                  <p className="text-xs text-cream/30 text-center">
                     Locks your dates until the schedule is published.
                   </p>
                 </div>
