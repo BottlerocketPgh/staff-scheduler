@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import Link from 'next/link'
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -96,7 +97,7 @@ function PasswordGate({ onAuth }: { onAuth: () => void }) {
 
   return (
     <main className="max-w-sm mx-auto pt-32 px-6">
-      <p className="text-forest-dark font-bold tracking-tight">Flight Deck</p>
+      <Link href="/" className="text-forest-dark font-bold tracking-tight hover:text-rust transition-colors">Flight Deck</Link>
       <p className="text-forest/40 text-xs mb-1">a scheduling tool by Bottlerocket</p>
       <h1 className="text-xl font-bold mb-6 text-center text-forest-dark">Admin</h1>
       <form onSubmit={submit} className="space-y-3">
@@ -762,7 +763,7 @@ export default function AdminPage() {
 
   return (
     <main className="max-w-2xl mx-auto px-4 py-10">
-      <p className="text-forest-dark font-bold tracking-tight">Flight Deck</p>
+      <Link href="/" className="text-forest-dark font-bold tracking-tight hover:text-rust transition-colors">Flight Deck</Link>
       <p className="text-forest/40 text-xs mb-1">a scheduling tool by Bottlerocket</p>
       <h1 className="text-xl font-bold text-forest-dark mb-6">Admin</h1>
       <div className="flex gap-2 mb-6">
