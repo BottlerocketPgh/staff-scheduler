@@ -10,11 +10,12 @@ function fmtDate(dateStr: string) {
 function Result({ title, message }: { title: string; message: string }) {
   return (
     <main className="max-w-sm mx-auto pt-32 px-6 text-center">
-      <p className="text-cream/40 text-xs mb-8 tracking-widest uppercase">FlightDeck · Bottlerocket</p>
+      <p className="text-cream font-bold tracking-tight">Flight Deck</p>
+      <p className="text-cream/40 text-xs mb-8">a scheduling tool by Bottlerocket</p>
       <h1 className="text-xl font-bold mb-3 text-cream">{title}</h1>
       <p className="text-cream/60">{message}</p>
       <a href="/" className="mt-10 inline-block text-sm text-cream/30 hover:text-cream/60 underline transition-colors">
-        Back to FlightDeck
+        Back to Flight Deck
       </a>
     </main>
   )

@@ -95,7 +95,8 @@ function PasswordGate({ onAuth }: { onAuth: () => void }) {
 
   return (
     <main className="max-w-sm mx-auto pt-32 px-6">
-      <p className="text-cream/30 text-xs tracking-widest uppercase mb-1">FlightDeck · Bottlerocket</p>
+      <p className="text-cream font-bold tracking-tight">Flight Deck</p>
+      <p className="text-cream/40 text-xs mb-1">a scheduling tool by Bottlerocket</p>
       <h1 className="text-xl font-bold mb-6 text-center text-cream">Admin</h1>
       <form onSubmit={submit} className="space-y-3">
         <input
@@ -618,7 +619,8 @@ export default function AdminPage() {
 
   return (
     <main className="max-w-2xl mx-auto px-4 py-10">
-      <p className="text-cream/30 text-xs tracking-widest uppercase mb-1">FlightDeck · Bottlerocket</p>
+      <p className="text-cream font-bold tracking-tight">Flight Deck</p>
+      <p className="text-cream/40 text-xs mb-1">a scheduling tool by Bottlerocket</p>
       <h1 className="text-xl font-bold text-cream mb-6">Admin</h1>
       <div className="flex gap-2 mb-6">
         {(['schedule', 'staff', 'requests'] as const).map((t) => (

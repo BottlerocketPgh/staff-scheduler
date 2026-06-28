@@ -4,8 +4,8 @@ export default function Home() {
   return (
     <main className="max-w-sm mx-auto pt-24 px-6">
       <div className="text-center mb-12">
-        <h1 className="text-3xl font-bold tracking-tight text-cream">FlightDeck</h1>
-        <p className="text-cream/50 text-sm mt-1">by Bottlerocket</p>
+        <h1 className="text-3xl font-bold tracking-tight text-cream">Flight Deck</h1>
+        <p className="text-cream/50 text-sm mt-1">a scheduling tool by Bottlerocket</p>
       </div>
       <div className="flex flex-col gap-3">
         <Link href="/availability" className="bg-forest hover:bg-forest-light rounded-xl p-5 block transition-colors border border-forest-light/30">
