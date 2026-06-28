@@ -132,6 +132,9 @@ function ScheduleTab() {
   const [sendResult, setSendResult] = useState<{ sent: number; missing: string[] } | null>(null)
   const [submissions, setSubmissions] = useState<{ staff_name: string }[]>([])
   const [unlocking, setUnlocking] = useState(false)
+  const [allStaff, setAllStaff] = useState<string[]>([])
+  const [showSubmissions, setShowSubmissions] = useState(false)
+  const [unlockingName, setUnlockingName] = useState<string | null>(null)
   const monthOptions = getMonthOptions()
   const today = new Date().toISOString().split('T')[0]
 
@@ -142,10 +145,12 @@ function ScheduleTab() {
     Promise.all([
       fetch(`/api/admin/month-view?month=${m}`).then((r) => r.json()),
       fetch(`/api/availability/submit?month=${m}`).then((r) => r.json()),
+      fetch('/api/staff').then((r) => r.json()),
     ])
-      .then(([monthData, subs]) => {
+      .then(([monthData, subs, staffList]) => {
         setData(monthData)
         setSubmissions(Array.isArray(subs) ? subs : [])
+        setAllStaff((staffList as { name: string }[]).map((s) => s.name))
       })
       .finally(() => setLoading(false))
   }
@@ -196,6 +201,17 @@ function ScheduleTab() {
     setUnlocking(false)
   }
 
+  async function unlockOne(name: string) {
+    setUnlockingName(name)
+    await fetch('/api/availability/submit', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ month, name }),
+    })
+    setSubmissions((prev) => prev.filter((s) => s.staff_name !== name))
+    setUnlockingName(null)
+  }
+
   const weeks = getCalendarWeeks(month)
   const selected = selectedDate ? data[selectedDate] : null
 
@@ -211,19 +227,13 @@ function ScheduleTab() {
           >
             {sending ? 'Sending...' : `Send Confirmed Schedule — ${monthLabel(month)}`}
           </button>
-          {submissions.length > 0 && (
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-cream/50">
-                {submissions.length} submitted
-              </span>
-              <button
-                onClick={unlockAll}
-                disabled={unlocking}
-                className="text-xs text-cream/40 hover:text-cream/70 underline disabled:opacity-50"
-              >
-                {unlocking ? 'Unlocking...' : 'Unlock all'}
-              </button>
-            </div>
+          {allStaff.length > 0 && (
+            <button
+              onClick={() => setShowSubmissions(true)}
+              className="text-sm text-cream/50 hover:text-cream underline transition-colors"
+            >
+              {submissions.length}/{allStaff.length} submitted availability
+            </button>
           )}
           {sendResult && (
             <span className="text-sm text-cream/50">
@@ -312,6 +322,65 @@ function ScheduleTab() {
               </div>
             ))}
           </div>
+
+          {/* Submissions modal */}
+          {showSubmissions && (
+            <div className="fixed inset-0 bg-forest-dark/80 flex items-start justify-center z-50 p-4 pt-20">
+              <div className="bg-forest border border-forest-light/30 rounded-2xl p-5 w-full max-w-sm max-h-[70vh] overflow-y-auto">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="font-semibold text-cream">Availability — {monthLabel(month)}</h2>
+                  <button onClick={() => setShowSubmissions(false)} className="text-cream/40 hover:text-cream text-lg leading-none">✕</button>
+                </div>
+
+                {submissions.length > 0 && (
+                  <div className="mb-5">
+                    <p className="text-xs text-cream/40 uppercase tracking-wider mb-2">Submitted</p>
+                    <div className="space-y-1">
+                      {submissions.map((s) => (
+                        <div key={s.staff_name} className="flex items-center justify-between py-1">
+                          <span className="text-sm text-cream">{s.staff_name}</span>
+                          <button
+                            onClick={() => unlockOne(s.staff_name)}
+                            disabled={!!unlockingName}
+                            className="text-xs text-cream/40 hover:text-rust-light underline disabled:opacity-40 transition-colors"
+                          >
+                            {unlockingName === s.staff_name ? 'Unlocking...' : 'Unlock'}
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                    {submissions.length > 1 && (
+                      <button
+                        onClick={async () => { await unlockAll(); setShowSubmissions(false) }}
+                        disabled={unlocking}
+                        className="mt-3 text-xs text-cream/40 hover:text-rust-light underline disabled:opacity-50 transition-colors"
+                      >
+                        {unlocking ? 'Unlocking...' : 'Unlock all'}
+                      </button>
+                    )}
+                  </div>
+                )}
+
+                {(() => {
+                  const submittedNames = new Set(submissions.map((s) => s.staff_name))
+                  const notSubmitted = allStaff.filter((name) => !submittedNames.has(name))
+                  if (notSubmitted.length === 0) return null
+                  return (
+                    <div>
+                      <p className="text-xs text-cream/40 uppercase tracking-wider mb-2">Not yet submitted</p>
+                      <div className="space-y-1">
+                        {notSubmitted.map((name) => (
+                          <div key={name} className="py-1">
+                            <span className="text-sm text-cream/40">{name}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )
+                })()}
+              </div>
+            </div>
+          )}
 
           {/* Selected date panel */}
           {selectedDate && selected && (
