@@ -295,9 +295,16 @@ function ScheduleTab() {
                         </span>
                       )}
                       {!day?.assigned && (day?.available?.length ?? 0) > 0 && (
-                        <span className="mt-auto text-[8px] text-cream/25">
-                          {day.available.length} avail
-                        </span>
+                        <div className="mt-auto flex flex-col gap-px">
+                          {day.available.slice(0, 3).map((s) => (
+                            <span key={s.name} className="text-[8px] text-cream/40 leading-none truncate">
+                              {s.name.split(' ')[0]}
+                            </span>
+                          ))}
+                          {day.available.length > 3 && (
+                            <span className="text-[8px] text-cream/25 leading-none">+{day.available.length - 3}</span>
+                          )}
+                        </div>
                       )}
                     </button>
                   )
