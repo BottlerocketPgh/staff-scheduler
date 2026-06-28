@@ -112,7 +112,23 @@ export async function PATCH(req: NextRequest) {
 
   if (body.action === 'rename') {
     if (!body.name?.trim()) return NextResponse.json({ error: 'Name required' }, { status: 400 })
-    await supabase.from('staff').update({ name: body.name.trim() }).eq('id', body.id)
+    const newName = body.name.trim()
+
+    // Get the current name before updating
+    const { data: existing } = await supabase.from('staff').select('name').eq('id', body.id).single()
+    if (!existing) return NextResponse.json({ error: 'Staff not found' }, { status: 404 })
+    const oldName = existing.name
+
+    // Cascade rename across all tables that store staff_name as text
+    await Promise.all([
+      supabase.from('staff').update({ name: newName }).eq('id', body.id),
+      supabase.from('availability').update({ staff_name: newName }).eq('staff_name', oldName),
+      supabase.from('assignments').update({ staff_name: newName }).eq('staff_name', oldName),
+      supabase.from('availability_submissions').update({ staff_name: newName }).eq('staff_name', oldName),
+      supabase.from('time_off_requests').update({ staff_name: newName }).eq('staff_name', oldName),
+      supabase.from('shift_confirmations').update({ staff_name: newName }).eq('staff_name', oldName),
+    ])
+
     return NextResponse.json({ ok: true })
   }
 
