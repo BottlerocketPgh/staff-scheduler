@@ -15,6 +15,14 @@ function getMonthOptions() {
   return options
 }
 
+function gcalUrl(dateStr: string) {
+  const [y, m, d] = dateStr.split('-').map(Number)
+  const pad = (n: number) => String(n).padStart(2, '0')
+  const start = `${y}${pad(m)}${pad(d)}T160000`
+  const end   = `${y}${pad(m)}${pad(d)}T220000`
+  return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=Bottlerocket+Shift&dates=${start}/${end}&details=Flight+Deck+shift+at+Bottlerocket&location=Bottlerocket+Social+Hall%2C+Pittsburgh+PA`
+}
+
 function fmtDateLong(dateStr: string) {
   const [y, m, d] = dateStr.split('-').map(Number)
   return new Date(y, m - 1, d).toLocaleDateString('en-US', {
@@ -299,6 +307,24 @@ export default function MySchedulePage() {
 
               {myDates.length === 0 && (
                 <p className="text-forest/30 text-sm text-center py-4">No shifts assigned for this month yet.</p>
+              )}
+
+              {myDates.filter(d => d >= today).length > 0 && (
+                <div className="mt-2 space-y-1">
+                  <p className="text-xs text-forest/40 uppercase tracking-wider mb-2">Add to Google Calendar</p>
+                  {myDates.filter(d => d >= today).sort().map(date => (
+                    <a
+                      key={date}
+                      href={gcalUrl(date)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center justify-between bg-white border border-forest/10 rounded-lg px-3 py-2 hover:bg-forest/5 transition-colors"
+                    >
+                      <span className="text-sm text-forest/70">{fmtDateLong(date)}</span>
+                      <span className="text-xs text-steel ml-3 shrink-0">+ GCal</span>
+                    </a>
+                  ))}
+                </div>
               )}
             </>
           )}

@@ -135,6 +135,7 @@ function ScheduleTab() {
   const [allStaff, setAllStaff] = useState<string[]>([])
   const [showSubmissions, setShowSubmissions] = useState(false)
   const [unlockingName, setUnlockingName] = useState<string | null>(null)
+  const [noTechDates, setNoTechDates] = useState<Set<string>>(new Set())
   const monthOptions = getMonthOptions()
   const today = new Date().toISOString().split('T')[0]
 
@@ -146,11 +147,13 @@ function ScheduleTab() {
       fetch(`/api/admin/month-view?month=${m}`).then((r) => r.json()),
       fetch(`/api/availability/submit?month=${m}`).then((r) => r.json()),
       fetch('/api/staff').then((r) => r.json()),
+      fetch(`/api/no-tech?month=${m}`).then((r) => r.json()),
     ])
-      .then(([monthData, subs, staffList]) => {
+      .then(([monthData, subs, staffList, noTechList]) => {
         setData(monthData)
         setSubmissions(Array.isArray(subs) ? subs : [])
         setAllStaff((staffList as { name: string }[]).map((s) => s.name))
+        setNoTechDates(new Set(noTechList as string[]))
       })
       .finally(() => setLoading(false))
   }
@@ -199,6 +202,18 @@ function ScheduleTab() {
     })
     setSubmissions([])
     setUnlocking(false)
+  }
+
+  async function toggleNoTech(date: string) {
+    const removing = noTechDates.has(date)
+    const next = new Set(noTechDates)
+    removing ? next.delete(date) : next.add(date)
+    setNoTechDates(next)
+    await fetch('/api/no-tech', {
+      method: removing ? 'DELETE' : 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ date }),
+    })
   }
 
   async function unlockOne(name: string) {
@@ -275,6 +290,7 @@ function ScheduleTab() {
                   const isToday = date === today
                   const isPast = date < today
                   const isCancelled = day?.confirmStatus === 'cancelled'
+                  const isNoTech = noTechDates.has(date)
                   const dayNum = parseInt(date.split('-')[2])
 
                   return (
@@ -289,11 +305,13 @@ function ScheduleTab() {
                             ? 'bg-red-950/50 hover:bg-red-950'
                             : day?.assigned
                               ? 'bg-rust/10 hover:bg-rust/20'
-                              : isToday
-                                ? 'bg-rust/10 border border-rust/30 hover:bg-rust/20'
-                                : isPast
-                                  ? 'bg-white hover:bg-white'
-                                  : 'bg-white hover:bg-forest/8',
+                              : isNoTech
+                                ? 'bg-forest/5 hover:bg-forest/10'
+                                : isToday
+                                  ? 'bg-rust/10 border border-rust/30 hover:bg-rust/20'
+                                  : isPast
+                                    ? 'bg-white hover:bg-white'
+                                    : 'bg-white hover:bg-forest/8',
                       ].join(' ')}
                     >
                       <span className={`text-xs leading-none ${isPast && !day?.assigned ? 'text-forest/25' : 'text-forest/50'}`}>
@@ -304,7 +322,10 @@ function ScheduleTab() {
                           {day.assigned.split(' ')[0]}
                         </span>
                       )}
-                      {!day?.assigned && (day?.available?.length ?? 0) > 0 && (
+                      {!day?.assigned && isNoTech && (
+                        <span className="mt-auto text-[9px] text-forest/30 leading-none">off</span>
+                      )}
+                      {!day?.assigned && !isNoTech && (day?.available?.length ?? 0) > 0 && (
                         <div className="mt-auto flex flex-col gap-px">
                           {day.available.slice(0, 3).map((s) => (
                             <span key={s.name} className="text-[8px] text-forest/70 leading-none truncate">
@@ -432,8 +453,24 @@ function ScheduleTab() {
               {selected.assigned && (
                 <div className="mt-3 pt-3 border-t border-forest/15 flex items-center gap-2">
                   <span className="text-sm text-forest/50">Assigned:</span>
-                  <span className="text-sm text-honey font-medium">{selected.assigned}</span>
+                  <span className="text-sm text-rust font-medium">{selected.assigned}</span>
                   {selected.confirmStatus && <ConfirmBadge status={selected.confirmStatus} />}
+                </div>
+              )}
+
+              {!selected.assigned && (
+                <div className="mt-3 pt-3 border-t border-forest/15">
+                  <button
+                    onClick={() => toggleNoTech(selectedDate)}
+                    className={[
+                      'text-xs underline transition-colors',
+                      noTechDates.has(selectedDate)
+                        ? 'text-rust hover:text-rust-dark'
+                        : 'text-forest/40 hover:text-forest-dark',
+                    ].join(' ')}
+                  >
+                    {noTechDates.has(selectedDate) ? '✓ No Tech Needed — tap to undo' : 'Mark as No Tech Needed'}
+                  </button>
                 </div>
               )}
             </div>
@@ -450,6 +487,10 @@ function StaffTab() {
   const [staff, setStaff] = useState<StaffMember[]>([])
   const [loading, setLoading] = useState(false)
   const [working, setWorking] = useState(false)
+  const [editingId, setEditingId] = useState<string | null>(null)
+  const [editingName, setEditingName] = useState('')
+  const [addName, setAddName] = useState('')
+  const [adding, setAdding] = useState(false)
 
   useEffect(() => {
     setLoading(true)
@@ -472,22 +513,8 @@ function StaffTab() {
     await fetch('/api/staff', {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        action: 'reorder',
-        order: reordered.map(({ id, priority_order }) => ({ id, priority_order })),
-      }),
+      body: JSON.stringify({ action: 'reorder', order: reordered.map(({ id, priority_order }) => ({ id, priority_order })) }),
     })
-    setWorking(false)
-  }
-
-  async function confirm(id: string) {
-    setWorking(true)
-    await fetch('/api/staff', {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'confirm', id }),
-    })
-    setStaff((prev) => prev.map((s) => (s.id === id ? { ...s, is_new: false } : s)))
     setWorking(false)
   }
 
@@ -511,77 +538,99 @@ function StaffTab() {
     })
   }
 
+  async function saveName(id: string) {
+    const name = editingName.trim()
+    if (!name) { setEditingId(null); return }
+    setStaff((prev) => prev.map((s) => (s.id === id ? { ...s, name } : s)))
+    setEditingId(null)
+    await fetch('/api/staff', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'rename', id, name }),
+    })
+  }
+
+  async function addStaff() {
+    const name = addName.trim()
+    if (!name) return
+    setAdding(true)
+    const res = await fetch('/api/staff', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'add', name }),
+    })
+    const newMember = await res.json()
+    setStaff((prev) => [...prev, newMember])
+    setAddName('')
+    setAdding(false)
+  }
+
   if (loading) return <div className="text-forest/40 text-center py-12">Loading...</div>
 
   return (
     <div>
       <p className="text-sm text-forest/40 mb-4">
-        Priority 1 = highest. Use ↑↓ to reorder. Add email addresses so staff receive schedule
-        notifications and shift reminders.
+        Priority 1 = highest. Use ↑↓ to reorder. Click a name to edit it.
       </p>
-      {staff.length === 0 ? (
-        <div className="text-forest/25 text-center py-10">
-          No staff yet — they&apos;ll appear here once someone submits availability.
-        </div>
-      ) : (
-        <div className="space-y-2">
-          {staff.map((s, idx) => (
-            <div
-              key={s.id}
-              className={[
-                'flex items-center gap-3 rounded-xl px-4 py-3',
-                'bg-white border border-forest/10',
-              ].join(' ')}
-            >
-              <span className="text-forest/25 text-sm w-5 text-right shrink-0">{idx + 1}</span>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-1">
-                  <span className="font-medium truncate text-forest-dark">{s.name}</span>
-                </div>
+      <div className="space-y-2">
+        {staff.map((s, idx) => (
+          <div key={s.id} className="flex items-center gap-3 rounded-xl px-4 py-3 bg-white border border-forest/10">
+            <span className="text-forest/25 text-sm w-5 text-right shrink-0">{idx + 1}</span>
+            <div className="flex-1 min-w-0">
+              {editingId === s.id ? (
                 <input
-                  type="email"
-                  defaultValue={s.email ?? ''}
-                  onBlur={(e) => saveEmail(s.id, e.target.value)}
-                  placeholder="email@example.com"
-                  className="text-xs bg-white border border-forest/20 rounded px-2 py-1 text-forest/70 w-full max-w-[220px] outline-none focus:ring-1 focus:ring-rust placeholder-forest/30"
+                  autoFocus
+                  value={editingName}
+                  onChange={(e) => setEditingName(e.target.value)}
+                  onBlur={() => saveName(s.id)}
+                  onKeyDown={(e) => { if (e.key === 'Enter') saveName(s.id); if (e.key === 'Escape') setEditingId(null) }}
+                  className="font-medium text-forest-dark bg-cream border border-rust/40 rounded px-2 py-0.5 outline-none focus:ring-1 focus:ring-rust w-full max-w-[180px]"
                 />
-              </div>
-              <div className="flex items-center gap-2 shrink-0">
-                {s.is_new && (
-                  <button
-                    onClick={() => confirm(s.id)}
-                    disabled={working}
-                    className="text-xs bg-steel hover:bg-steel-dark text-cream px-2.5 py-1 rounded-lg transition-colors disabled:opacity-50"
-                  >
-                    Confirm
-                  </button>
-                )}
+              ) : (
                 <button
-                  onClick={() => move(s.id, 'up')}
-                  disabled={working || idx === 0}
-                  className="text-forest/50 hover:text-forest-dark disabled:opacity-20 text-lg leading-none px-1"
+                  onClick={() => { setEditingId(s.id); setEditingName(s.name) }}
+                  className="font-medium text-forest-dark hover:text-rust transition-colors text-left truncate"
                 >
-                  ↑
+                  {s.name}
                 </button>
-                <button
-                  onClick={() => move(s.id, 'down')}
-                  disabled={working || idx === staff.length - 1}
-                  className="text-forest/50 hover:text-forest-dark disabled:opacity-20 text-lg leading-none px-1"
-                >
-                  ↓
-                </button>
-                <button
-                  onClick={() => deactivate(s.id, s.name)}
-                  disabled={working}
-                  className="text-forest/25 hover:text-red-400 text-sm disabled:opacity-50 transition-colors ml-1"
-                >
-                  ✕
-                </button>
-              </div>
+              )}
+              <input
+                type="email"
+                defaultValue={s.email ?? ''}
+                onBlur={(e) => saveEmail(s.id, e.target.value)}
+                placeholder="email@example.com"
+                className="mt-1 text-xs bg-white border border-forest/20 rounded px-2 py-1 text-forest/70 w-full max-w-[220px] outline-none focus:ring-1 focus:ring-rust placeholder-forest/30"
+              />
             </div>
-          ))}
-        </div>
-      )}
+            <div className="flex items-center gap-2 shrink-0">
+              <button onClick={() => move(s.id, 'up')} disabled={working || idx === 0} className="text-forest/50 hover:text-forest-dark disabled:opacity-20 text-lg leading-none px-1">↑</button>
+              <button onClick={() => move(s.id, 'down')} disabled={working || idx === staff.length - 1} className="text-forest/50 hover:text-forest-dark disabled:opacity-20 text-lg leading-none px-1">↓</button>
+              <button onClick={() => deactivate(s.id, s.name)} disabled={working} className="text-forest/25 hover:text-red-400 text-sm disabled:opacity-50 transition-colors ml-1">✕</button>
+            </div>
+          </div>
+        ))}
+
+        {staff.length === 0 && (
+          <div className="text-forest/25 text-center py-6">No staff yet.</div>
+        )}
+      </div>
+
+      <div className="mt-5 flex gap-2">
+        <input
+          value={addName}
+          onChange={(e) => setAddName(e.target.value)}
+          onKeyDown={(e) => { if (e.key === 'Enter') addStaff() }}
+          placeholder="Add new staff member..."
+          className="flex-1 bg-white border border-forest/20 rounded-lg px-3 py-2 text-sm text-forest-dark outline-none focus:ring-2 focus:ring-rust placeholder-forest/30"
+        />
+        <button
+          onClick={addStaff}
+          disabled={adding || !addName.trim()}
+          className="bg-rust hover:bg-rust-dark text-cream text-sm px-4 py-2 rounded-lg font-medium disabled:opacity-40 transition-colors"
+        >
+          {adding ? 'Adding...' : 'Add'}
+        </button>
+      </div>
     </div>
   )
 }

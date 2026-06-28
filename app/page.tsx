@@ -21,6 +21,11 @@ export default function Home() {
           <div className="text-forest/50 text-sm mt-0.5">See who&apos;s working each night</div>
         </Link>
       </div>
+      <div className="mt-8 text-center">
+        <Link href="/admin" className="text-xs text-forest/30 hover:text-forest/60 transition-colors">
+          Admin login
+        </Link>
+      </div>
     </main>
   )
 }

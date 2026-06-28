@@ -102,5 +102,25 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json({ ok: true })
   }
 
+  if (body.action === 'rename') {
+    if (!body.name?.trim()) return NextResponse.json({ error: 'Name required' }, { status: 400 })
+    await supabase.from('staff').update({ name: body.name.trim() }).eq('id', body.id)
+    return NextResponse.json({ ok: true })
+  }
+
+  if (body.action === 'add') {
+    if (!body.name?.trim()) return NextResponse.json({ error: 'Name required' }, { status: 400 })
+    const { data: existing } = await supabase.from('staff').select('*').ilike('name', body.name.trim()).single()
+    if (existing) {
+      if (!existing.active) await supabase.from('staff').update({ active: true }).eq('id', existing.id)
+      return NextResponse.json({ ...existing, active: true })
+    }
+    const { data: maxRow } = await supabase.from('staff').select('priority_order').order('priority_order', { ascending: false }).limit(1).single()
+    const nextPriority = (maxRow?.priority_order ?? 0) + 1
+    const { data, error } = await supabase.from('staff').insert({ name: body.name.trim(), priority_order: nextPriority, is_new: false }).select().single()
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    return NextResponse.json(data)
+  }
+
   return NextResponse.json({ error: 'Unknown action' }, { status: 400 })
 }
