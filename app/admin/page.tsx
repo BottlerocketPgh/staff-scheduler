@@ -307,12 +307,12 @@ function ScheduleTab() {
                       {!day?.assigned && (day?.available?.length ?? 0) > 0 && (
                         <div className="mt-auto flex flex-col gap-px">
                           {day.available.slice(0, 3).map((s) => (
-                            <span key={s.name} className="text-[8px] text-forest/40 leading-none truncate">
+                            <span key={s.name} className="text-[8px] text-forest/70 leading-none truncate">
                               {s.name.split(' ')[0]}
                             </span>
                           ))}
                           {day.available.length > 3 && (
-                            <span className="text-[8px] text-forest/25 leading-none">+{day.available.length - 3}</span>
+                            <span className="text-[8px] text-forest/50 leading-none">+{day.available.length - 3}</span>
                           )}
                         </div>
                       )}
