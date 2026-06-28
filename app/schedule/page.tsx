@@ -53,11 +53,11 @@ export default function SchedulePage() {
 
   return (
     <main className="max-w-lg mx-auto px-4 py-10">
-      <a href="/" className="text-cream/40 text-sm hover:text-cream/70 mb-6 inline-block transition-colors">
+      <a href="/" className="text-forest/40 text-sm hover:text-forest/70 mb-6 inline-block transition-colors">
         ← Back
       </a>
       <div className="flex items-center justify-between mb-6 gap-3 flex-wrap">
-        <h1 className="text-xl font-bold text-cream">Schedule</h1>
+        <h1 className="text-xl font-bold text-forest-dark">Schedule</h1>
         <div className="flex items-center gap-2">
           <Link
             href="/availability"
@@ -66,7 +66,7 @@ export default function SchedulePage() {
             Submit availability
           </Link>
           <select
-            className="bg-forest border border-forest-light/30 rounded-lg px-3 py-2 text-sm text-cream outline-none focus:ring-2 focus:ring-rust"
+            className="bg-white border border-forest/20 rounded-lg px-3 py-2 text-sm text-forest-dark outline-none focus:ring-2 focus:ring-rust"
             value={month}
             onChange={(e) => setMonth(e.target.value)}
           >
@@ -78,12 +78,12 @@ export default function SchedulePage() {
       </div>
 
       {loading ? (
-        <div className="text-cream/40 text-center py-12">Loading...</div>
+        <div className="text-forest/40 text-center py-12">Loading...</div>
       ) : (
         <>
           <div className="grid grid-cols-7 mb-1">
             {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((d) => (
-              <div key={d} className="text-center text-xs text-cream/40 py-1">{d}</div>
+              <div key={d} className="text-center text-xs text-forest/40 py-1">{d}</div>
             ))}
           </div>
           <div className="space-y-1">
@@ -103,17 +103,17 @@ export default function SchedulePage() {
                         isToday
                           ? 'bg-rust/20 border border-rust/40'
                           : isPast
-                            ? 'bg-forest/40'
+                            ? 'bg-white'
                             : assigned
-                              ? 'bg-forest border border-honey/20'
-                              : 'bg-forest',
+                              ? 'bg-white border border-honey/20'
+                              : 'bg-white',
                       ].join(' ')}
                     >
-                      <span className={`text-xs leading-none ${isPast && !assigned ? 'text-cream/25' : 'text-cream/50'}`}>
+                      <span className={`text-xs leading-none ${isPast && !assigned ? 'text-forest/25' : 'text-forest/50'}`}>
                         {dayNum}
                       </span>
                       {assigned && (
-                        <span className={`text-[10px] font-semibold leading-tight mt-auto truncate ${isPast ? 'text-cream/30' : 'text-honey'}`}>
+                        <span className={`text-[10px] font-semibold leading-tight mt-auto truncate ${isPast ? 'text-forest/30' : 'text-honey'}`}>
                           {assigned.split(' ')[0]}
                         </span>
                       )}

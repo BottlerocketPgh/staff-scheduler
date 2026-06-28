@@ -120,18 +120,18 @@ export default function AvailabilityPage() {
 
   return (
     <main className="max-w-md mx-auto px-4 py-10">
-      <a href="/" className="text-cream/40 text-sm hover:text-cream/70 mb-6 inline-block transition-colors">
+      <a href="/" className="text-forest/40 text-sm hover:text-forest/70 mb-6 inline-block transition-colors">
         ← Back
       </a>
-      <h1 className="text-xl font-bold mb-6 text-cream">My Availability</h1>
+      <h1 className="text-xl font-bold mb-6 text-forest-dark">My Availability</h1>
 
       {!confirmedName ? (
         <div className="space-y-4">
           <div>
-            <label className="block text-sm text-cream/60 mb-1.5">Your name</label>
+            <label className="block text-sm text-forest/60 mb-1.5">Your name</label>
             <div className="relative">
               <input
-                className="w-full bg-forest rounded-lg px-4 py-2.5 text-cream outline-none focus:ring-2 focus:ring-rust border border-forest-light/30 placeholder-cream/30"
+                className="w-full bg-white rounded-lg px-4 py-2.5 text-forest-dark outline-none focus:ring-2 focus:ring-rust border border-forest/20 placeholder-forest/30"
                 value={nameInput}
                 onChange={(e) => { setNameInput(e.target.value); setShowSuggestions(true) }}
                 onFocus={() => setShowSuggestions(true)}
@@ -141,11 +141,11 @@ export default function AvailabilityPage() {
                 autoFocus
               />
               {showSuggestions && suggestions.length > 0 && (
-                <ul className="absolute z-10 w-full bg-forest border border-forest-light/40 rounded-lg mt-1 shadow-xl overflow-hidden">
+                <ul className="absolute z-10 w-full bg-white border border-forest/20 rounded-lg mt-1 shadow-xl overflow-hidden">
                   {suggestions.map((s) => (
                     <li
                       key={s}
-                      className="px-4 py-2.5 hover:bg-forest-light cursor-pointer text-sm text-cream"
+                      className="px-4 py-2.5 hover:bg-forest/8 cursor-pointer text-sm text-forest-dark"
                       onMouseDown={() => confirmName(s)}
                     >
                       {s}
@@ -167,16 +167,16 @@ export default function AvailabilityPage() {
         <div>
           <div className="flex items-center justify-between mb-5">
             <div className="flex items-center gap-2">
-              <span className="text-cream font-medium">{confirmedName}</span>
+              <span className="text-forest-dark font-medium">{confirmedName}</span>
               <button
-                className="text-xs text-cream/40 hover:text-cream/70 underline transition-colors"
+                className="text-xs text-forest/40 hover:text-forest/70 underline transition-colors"
                 onClick={() => { setConfirmedName(''); setNameInput(''); setSelectedDates(new Set()); setIsSubmitted(false) }}
               >
                 change
               </button>
             </div>
             <select
-              className="bg-forest border border-forest-light/30 rounded-lg px-3 py-2 text-sm text-cream outline-none focus:ring-2 focus:ring-rust"
+              className="bg-white border border-forest/20 rounded-lg px-3 py-2 text-sm text-forest-dark outline-none focus:ring-2 focus:ring-rust"
               value={month}
               onChange={(e) => setMonth(e.target.value)}
             >
@@ -193,12 +193,12 @@ export default function AvailabilityPage() {
           )}
 
           {loadingDates ? (
-            <div className="text-cream/40 text-center py-12">Loading...</div>
+            <div className="text-forest/40 text-center py-12">Loading...</div>
           ) : (
             <>
               <div className="grid grid-cols-7 gap-1 mb-1">
                 {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map((d) => (
-                  <div key={d} className="text-center text-xs text-cream/40 py-1">{d}</div>
+                  <div key={d} className="text-center text-xs text-forest/40 py-1">{d}</div>
                 ))}
               </div>
               <div className="grid grid-cols-7 gap-1">
@@ -218,8 +218,8 @@ export default function AvailabilityPage() {
                             ? 'bg-steel/20 text-steel-light border border-steel/30 cursor-default'
                             : 'bg-rust text-cream hover:bg-rust-dark'
                           : isSubmitted
-                            ? 'bg-forest/60 text-cream/20 cursor-default'
-                            : 'bg-forest text-cream/70 hover:bg-forest-light',
+                            ? 'bg-white/80 text-forest/20 cursor-default'
+                            : 'bg-white text-forest/70 hover:bg-forest/8',
                         busy ? 'opacity-50' : '',
                         'disabled:cursor-default',
                       ].join(' ')}
@@ -239,7 +239,7 @@ export default function AvailabilityPage() {
                   >
                     {submitting ? 'Submitting...' : `Submit availability for ${monthLabel(month)}`}
                   </button>
-                  <p className="text-xs text-cream/30 text-center">
+                  <p className="text-xs text-forest/30 text-center">
                     Locks your dates until the schedule is published.
                   </p>
                 </div>

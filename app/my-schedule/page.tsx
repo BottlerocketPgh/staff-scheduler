@@ -124,18 +124,18 @@ export default function MySchedulePage() {
 
   return (
     <main className="max-w-md mx-auto px-4 py-10">
-      <a href="/" className="text-cream/40 text-sm hover:text-cream/70 mb-6 inline-block transition-colors">
+      <a href="/" className="text-forest/40 text-sm hover:text-forest/70 mb-6 inline-block transition-colors">
         ← Back
       </a>
-      <h1 className="text-xl font-bold mb-6 text-cream">My Schedule</h1>
+      <h1 className="text-xl font-bold mb-6 text-forest-dark">My Schedule</h1>
 
       {!confirmedName ? (
         <div className="space-y-4">
           <div>
-            <label className="block text-sm text-cream/60 mb-1.5">Your name</label>
+            <label className="block text-sm text-forest/60 mb-1.5">Your name</label>
             <div className="relative">
               <input
-                className="w-full bg-forest border border-forest-light/30 rounded-lg px-4 py-2.5 text-cream outline-none focus:ring-2 focus:ring-rust placeholder-cream/30"
+                className="w-full bg-white border border-forest/20 rounded-lg px-4 py-2.5 text-forest-dark outline-none focus:ring-2 focus:ring-rust placeholder-forest/30"
                 value={nameInput}
                 onChange={(e) => { setNameInput(e.target.value); setShowSuggestions(true) }}
                 onFocus={() => setShowSuggestions(true)}
@@ -145,9 +145,9 @@ export default function MySchedulePage() {
                 autoFocus
               />
               {showSuggestions && suggestions.length > 0 && (
-                <ul className="absolute z-10 w-full bg-forest border border-forest-light/40 rounded-lg mt-1 shadow-xl overflow-hidden">
+                <ul className="absolute z-10 w-full bg-white border border-forest/20 rounded-lg mt-1 shadow-xl overflow-hidden">
                   {suggestions.map(s => (
-                    <li key={s} className="px-4 py-2.5 hover:bg-forest-light cursor-pointer text-sm text-cream" onMouseDown={() => confirmName(s)}>{s}</li>
+                    <li key={s} className="px-4 py-2.5 hover:bg-forest/8 cursor-pointer text-sm text-forest-dark" onMouseDown={() => confirmName(s)}>{s}</li>
                   ))}
                 </ul>
               )}
@@ -165,13 +165,13 @@ export default function MySchedulePage() {
         <div>
           <div className="flex items-center justify-between mb-5">
             <div className="flex items-center gap-2">
-              <span className="font-medium text-cream">{confirmedName}</span>
-              <button className="text-xs text-cream/40 hover:text-cream/70 underline" onClick={() => { setConfirmedName(''); setNameInput('') }}>
+              <span className="font-medium text-forest-dark">{confirmedName}</span>
+              <button className="text-xs text-forest/40 hover:text-forest/70 underline" onClick={() => { setConfirmedName(''); setNameInput('') }}>
                 change
               </button>
             </div>
             <select
-              className="bg-forest border border-forest-light/30 rounded-lg px-3 py-2 text-sm text-cream outline-none focus:ring-2 focus:ring-rust"
+              className="bg-white border border-forest/20 rounded-lg px-3 py-2 text-sm text-forest-dark outline-none focus:ring-2 focus:ring-rust"
               value={month}
               onChange={(e) => setMonth(e.target.value)}
             >
@@ -180,12 +180,12 @@ export default function MySchedulePage() {
           </div>
 
           {loading ? (
-            <div className="text-cream/40 text-center py-12">Loading...</div>
+            <div className="text-forest/40 text-center py-12">Loading...</div>
           ) : (
             <>
               <div className="grid grid-cols-7 mb-1">
                 {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map(d => (
-                  <div key={d} className="text-center text-xs text-cream/40 py-1">{d}</div>
+                  <div key={d} className="text-center text-xs text-forest/40 py-1">{d}</div>
                 ))}
               </div>
               <div className="space-y-1 mb-6">
@@ -216,18 +216,18 @@ export default function MySchedulePage() {
                                   ? 'bg-steel/20 border border-steel/30 cursor-default'
                                   : 'bg-rust/30 border border-rust/50 hover:bg-rust/40 cursor-pointer'
                               : isMyShift && isPast
-                                ? 'bg-forest/60 cursor-default'
-                                : 'bg-forest/30 cursor-default',
+                                ? 'bg-white/80 cursor-default'
+                                : 'bg-forest/5 cursor-default',
                           ].join(' ')}
                         >
-                          <span className={`text-xs leading-none ${isMyShift ? 'text-cream/70' : 'text-cream/20'}`}>
+                          <span className={`text-xs leading-none ${isMyShift ? 'text-forest/70' : 'text-forest/20'}`}>
                             {dayNum}
                           </span>
                           {isMyShift && (
                             <span className={`text-[9px] font-semibold mt-auto leading-none ${
                               req?.status === 'pending' ? 'text-honey' :
                               req?.status === 'approved' ? 'text-steel-light' :
-                              isPast ? 'text-cream/30' : 'text-rust-light'
+                              isPast ? 'text-forest/30' : 'text-rust-light'
                             }`}>
                               {req?.status === 'pending' ? 'req' : req?.status === 'approved' ? 'off' : 'on'}
                             </span>
@@ -239,7 +239,7 @@ export default function MySchedulePage() {
                 ))}
               </div>
 
-              <div className="flex gap-4 text-xs text-cream/40 mb-6">
+              <div className="flex gap-4 text-xs text-forest/40 mb-6">
                 <span className="flex items-center gap-1.5">
                   <span className="w-3 h-3 rounded bg-rust/30 border border-rust/50 inline-block" />
                   Your shift
@@ -255,14 +255,14 @@ export default function MySchedulePage() {
               </div>
 
               {requestingDate && (
-                <div className="bg-forest border border-forest-light/30 rounded-xl p-4">
+                <div className="bg-white border border-forest/15 rounded-xl p-4">
                   {timeOffMap.get(requestingDate) ? (
                     <>
-                      <p className="text-sm font-medium text-cream mb-1">
+                      <p className="text-sm font-medium text-forest-dark mb-1">
                         Request pending for {fmtDateLong(requestingDate)}
                       </p>
                       {timeOffMap.get(requestingDate)?.note && (
-                        <p className="text-xs text-cream/50 mb-3">Note: {timeOffMap.get(requestingDate)?.note}</p>
+                        <p className="text-xs text-forest/50 mb-3">Note: {timeOffMap.get(requestingDate)?.note}</p>
                       )}
                       <button onClick={() => cancelRequest(requestingDate)} className="text-sm text-red-400 hover:text-red-300 underline">
                         Cancel request
@@ -270,7 +270,7 @@ export default function MySchedulePage() {
                     </>
                   ) : (
                     <>
-                      <p className="text-sm font-medium text-cream mb-3">
+                      <p className="text-sm font-medium text-forest-dark mb-3">
                         Request off for {fmtDateLong(requestingDate)}?
                       </p>
                       <textarea
@@ -278,7 +278,7 @@ export default function MySchedulePage() {
                         onChange={(e) => setNoteInput(e.target.value)}
                         placeholder="Optional note (e.g. 'out of town')"
                         rows={2}
-                        className="w-full bg-forest-light rounded-lg px-3 py-2 text-sm text-cream outline-none focus:ring-1 focus:ring-rust placeholder-cream/30 resize-none mb-3"
+                        className="w-full bg-white border border-forest/20 rounded-lg px-3 py-2 text-sm text-forest-dark outline-none focus:ring-1 focus:ring-rust placeholder-forest/30 resize-none mb-3"
                       />
                       <div className="flex gap-2">
                         <button
@@ -288,7 +288,7 @@ export default function MySchedulePage() {
                         >
                           {submitting ? 'Sending...' : 'Send request'}
                         </button>
-                        <button onClick={() => setRequestingDate(null)} className="text-sm text-cream/40 hover:text-cream/70 px-3 py-2">
+                        <button onClick={() => setRequestingDate(null)} className="text-sm text-forest/40 hover:text-forest/70 px-3 py-2">
                           Cancel
                         </button>
                       </div>
@@ -298,7 +298,7 @@ export default function MySchedulePage() {
               )}
 
               {myDates.length === 0 && (
-                <p className="text-cream/30 text-sm text-center py-4">No shifts assigned for this month yet.</p>
+                <p className="text-forest/30 text-sm text-center py-4">No shifts assigned for this month yet.</p>
               )}
             </>
           )}
