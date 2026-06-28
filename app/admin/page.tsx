@@ -547,6 +547,15 @@ function StaffTab() {
     return raw.trim()
   }
 
+  function formatPhone(phone: string | null): string {
+    if (!phone) return ''
+    const digits = phone.replace(/\D/g, '')
+    if (digits.length === 11 && digits.startsWith('1')) {
+      return `+1 (${digits.slice(1, 4)}) ${digits.slice(4, 7)}-${digits.slice(7)}`
+    }
+    return phone
+  }
+
   async function savePhone(id: string, raw: string) {
     const phone = raw.trim() ? normalizePhone(raw) : ''
     await fetch('/api/staff', {
@@ -622,7 +631,7 @@ function StaffTab() {
                 />
                 <input
                   type="tel"
-                  defaultValue={s.phone ?? ''}
+                  defaultValue={formatPhone(s.phone)}
                   onBlur={(e) => savePhone(s.id, e.target.value)}
                   placeholder="4121234567"
                   className="text-xs bg-white border border-forest/20 rounded px-2 py-1 text-forest/70 w-full max-w-[140px] outline-none focus:ring-1 focus:ring-rust placeholder-forest/30"
