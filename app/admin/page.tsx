@@ -539,7 +539,15 @@ function StaffTab() {
     })
   }
 
-  async function savePhone(id: string, phone: string) {
+  function normalizePhone(raw: string): string {
+    const digits = raw.replace(/\D/g, '')
+    if (digits.length === 10) return `+1${digits}`
+    if (digits.length === 11 && digits.startsWith('1')) return `+${digits}`
+    return raw.trim()
+  }
+
+  async function savePhone(id: string, raw: string) {
+    const phone = raw.trim() ? normalizePhone(raw) : ''
     await fetch('/api/staff', {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
@@ -615,7 +623,7 @@ function StaffTab() {
                   type="tel"
                   defaultValue={s.phone ?? ''}
                   onBlur={(e) => savePhone(s.id, e.target.value)}
-                  placeholder="+14121234567"
+                  placeholder="4121234567"
                   className="text-xs bg-white border border-forest/20 rounded px-2 py-1 text-forest/70 w-full max-w-[140px] outline-none focus:ring-1 focus:ring-rust placeholder-forest/30"
                 />
               </div>
