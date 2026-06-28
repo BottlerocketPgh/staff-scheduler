@@ -123,18 +123,27 @@ function ScheduleTab() {
   const [assigning, setAssigning] = useState(false)
   const [sending, setSending] = useState(false)
   const [sendResult, setSendResult] = useState<{ sent: number; missing: string[] } | null>(null)
+  const [submissions, setSubmissions] = useState<{ staff_name: string }[]>([])
+  const [unlocking, setUnlocking] = useState(false)
   const monthOptions = getMonthOptions()
   const today = new Date().toISOString().split('T')[0]
 
-  useEffect(() => {
+  function loadMonth(m: string) {
     setSendResult(null)
     setSelectedDate(null)
     setLoading(true)
-    fetch(`/api/admin/month-view?month=${month}`)
-      .then((r) => r.json())
-      .then(setData)
+    Promise.all([
+      fetch(`/api/admin/month-view?month=${m}`).then((r) => r.json()),
+      fetch(`/api/availability/submit?month=${m}`).then((r) => r.json()),
+    ])
+      .then(([monthData, subs]) => {
+        setData(monthData)
+        setSubmissions(Array.isArray(subs) ? subs : [])
+      })
       .finally(() => setLoading(false))
-  }, [month])
+  }
+
+  useEffect(() => { loadMonth(month) }, [month])
 
   async function assign(date: string, name: string | null) {
     setAssigning(true)
@@ -160,6 +169,24 @@ function ScheduleTab() {
     })
     setSendResult(await res.json())
     setSending(false)
+    // Auto-unlock all submissions for this month after publishing
+    await fetch('/api/availability/submit', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ month }),
+    })
+    setSubmissions([])
+  }
+
+  async function unlockAll() {
+    setUnlocking(true)
+    await fetch('/api/availability/submit', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ month }),
+    })
+    setSubmissions([])
+    setUnlocking(false)
   }
 
   const weeks = getCalendarWeeks(month)
@@ -169,7 +196,7 @@ function ScheduleTab() {
     <div>
       {/* Toolbar */}
       <div className="flex items-center justify-between mb-4 gap-3 flex-wrap">
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 flex-wrap">
           <button
             onClick={sendSchedule}
             disabled={sending}
@@ -177,6 +204,20 @@ function ScheduleTab() {
           >
             {sending ? 'Sending...' : 'Send schedule emails'}
           </button>
+          {submissions.length > 0 && (
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-gray-400">
+                {submissions.length} submitted
+              </span>
+              <button
+                onClick={unlockAll}
+                disabled={unlocking}
+                className="text-xs text-gray-500 hover:text-gray-300 underline disabled:opacity-50"
+              >
+                {unlocking ? 'Unlocking...' : 'Unlock all'}
+              </button>
+            </div>
+          )}
           {sendResult && (
             <span className="text-sm text-gray-400">
               Sent to {sendResult.sent}.

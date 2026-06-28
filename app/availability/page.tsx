@@ -27,6 +27,11 @@ function getCalendarDays(month: string): (string | null)[] {
   return days
 }
 
+function monthLabel(month: string) {
+  const [y, m] = month.split('-').map(Number)
+  return new Date(y, m - 1, 1).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
+}
+
 export default function AvailabilityPage() {
   const [nameInput, setNameInput] = useState('')
   const [suggestions, setSuggestions] = useState<string[]>([])
@@ -37,13 +42,13 @@ export default function AvailabilityPage() {
   const [selectedDates, setSelectedDates] = useState<Set<string>>(new Set())
   const [loadingDates, setLoadingDates] = useState(false)
   const [toggling, setToggling] = useState<string | null>(null)
+  const [isSubmitted, setIsSubmitted] = useState(false)
+  const [submitting, setSubmitting] = useState(false)
   const debounceRef = useRef<ReturnType<typeof setTimeout>>()
+  const monthOptions = getMonthOptions()
 
   useEffect(() => {
-    if (!nameInput.trim() || confirmedName) {
-      setSuggestions([])
-      return
-    }
+    if (!nameInput.trim() || confirmedName) { setSuggestions([]); return }
     clearTimeout(debounceRef.current)
     debounceRef.current = setTimeout(async () => {
       const res = await fetch(`/api/staff?q=${encodeURIComponent(nameInput)}`)
@@ -54,9 +59,15 @@ export default function AvailabilityPage() {
   useEffect(() => {
     if (!confirmedName || !month) return
     setLoadingDates(true)
-    fetch(`/api/availability?name=${encodeURIComponent(confirmedName)}&month=${month}`)
-      .then((r) => r.json())
-      .then((dates: string[]) => setSelectedDates(new Set(dates)))
+    setIsSubmitted(false)
+    Promise.all([
+      fetch(`/api/availability?name=${encodeURIComponent(confirmedName)}&month=${month}`).then(r => r.json()),
+      fetch(`/api/availability/submit?name=${encodeURIComponent(confirmedName)}&month=${month}`).then(r => r.json()),
+    ])
+      .then(([dates, sub]) => {
+        setSelectedDates(new Set(dates as string[]))
+        setIsSubmitted((sub as { submitted: boolean }).submitted)
+      })
       .finally(() => setLoadingDates(false))
   }, [confirmedName, month])
 
@@ -79,13 +90,12 @@ export default function AvailabilityPage() {
   }
 
   async function toggleDate(date: string) {
-    if (toggling) return
+    if (toggling || isSubmitted) return
     const removing = selectedDates.has(date)
     setToggling(date)
     const next = new Set(selectedDates)
     removing ? next.delete(date) : next.add(date)
     setSelectedDates(next)
-
     const res = await fetch('/api/availability', {
       method: removing ? 'DELETE' : 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -95,8 +105,18 @@ export default function AvailabilityPage() {
     setToggling(null)
   }
 
+  async function submitAvailability() {
+    setSubmitting(true)
+    await fetch('/api/availability/submit', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: confirmedName, month }),
+    })
+    setIsSubmitted(true)
+    setSubmitting(false)
+  }
+
   const days = confirmedName ? getCalendarDays(month) : []
-  const monthOptions = getMonthOptions()
 
   return (
     <main className="max-w-md mx-auto px-4 py-10">
@@ -113,15 +133,10 @@ export default function AvailabilityPage() {
               <input
                 className="w-full bg-gray-800 rounded-lg px-4 py-2.5 outline-none focus:ring-2 focus:ring-amber-500"
                 value={nameInput}
-                onChange={(e) => {
-                  setNameInput(e.target.value)
-                  setShowSuggestions(true)
-                }}
+                onChange={(e) => { setNameInput(e.target.value); setShowSuggestions(true) }}
                 onFocus={() => setShowSuggestions(true)}
                 onBlur={() => setTimeout(() => setShowSuggestions(false), 150)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' && nameInput.trim()) confirmName(nameInput)
-                }}
+                onKeyDown={(e) => { if (e.key === 'Enter' && nameInput.trim()) confirmName(nameInput) }}
                 placeholder="Start typing your name..."
                 autoFocus
               />
@@ -155,11 +170,7 @@ export default function AvailabilityPage() {
               <span className="text-gray-200 font-medium">{confirmedName}</span>
               <button
                 className="text-xs text-gray-500 hover:text-gray-300 underline"
-                onClick={() => {
-                  setConfirmedName('')
-                  setNameInput('')
-                  setSelectedDates(new Set())
-                }}
+                onClick={() => { setConfirmedName(''); setNameInput(''); setSelectedDates(new Set()); setIsSubmitted(false) }}
               >
                 change
               </button>
@@ -170,12 +181,17 @@ export default function AvailabilityPage() {
               onChange={(e) => setMonth(e.target.value)}
             >
               {monthOptions.map((o) => (
-                <option key={o.value} value={o.value}>
-                  {o.label}
-                </option>
+                <option key={o.value} value={o.value}>{o.label}</option>
               ))}
             </select>
           </div>
+
+          {/* Submitted banner */}
+          {isSubmitted && (
+            <div className="bg-green-900/30 border border-green-700/40 rounded-lg px-4 py-3 mb-4 text-sm text-green-300">
+              ✓ Availability submitted for {monthLabel(month)}. Your dates are locked until the schedule is published.
+            </div>
+          )}
 
           {loadingDates ? (
             <div className="text-gray-500 text-center py-12">Loading...</div>
@@ -183,9 +199,7 @@ export default function AvailabilityPage() {
             <>
               <div className="grid grid-cols-7 gap-1 mb-1">
                 {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map((d) => (
-                  <div key={d} className="text-center text-xs text-gray-500 py-1">
-                    {d}
-                  </div>
+                  <div key={d} className="text-center text-xs text-gray-500 py-1">{d}</div>
                 ))}
               </div>
               <div className="grid grid-cols-7 gap-1">
@@ -197,12 +211,16 @@ export default function AvailabilityPage() {
                     <button
                       key={date}
                       onClick={() => toggleDate(date)}
-                      disabled={!!toggling}
+                      disabled={!!toggling || isSubmitted}
                       className={[
                         'aspect-square rounded-lg text-sm font-medium transition-colors',
                         active
-                          ? 'bg-amber-600 text-white hover:bg-amber-500'
-                          : 'bg-gray-800 text-gray-300 hover:bg-gray-700',
+                          ? isSubmitted
+                            ? 'bg-green-800/60 text-green-200 cursor-default'
+                            : 'bg-amber-600 text-white hover:bg-amber-500'
+                          : isSubmitted
+                            ? 'bg-gray-900/40 text-gray-600 cursor-default'
+                            : 'bg-gray-800 text-gray-300 hover:bg-gray-700',
                         busy ? 'opacity-50' : '',
                         'disabled:cursor-default',
                       ].join(' ')}
@@ -212,9 +230,21 @@ export default function AvailabilityPage() {
                   )
                 })}
               </div>
-              <p className="text-xs text-gray-600 mt-4 text-center">
-                Tap dates to toggle. Changes save immediately.
-              </p>
+
+              {!isSubmitted && (
+                <div className="mt-6 space-y-2">
+                  <button
+                    onClick={submitAvailability}
+                    disabled={submitting || selectedDates.size === 0}
+                    className="w-full bg-amber-600 hover:bg-amber-500 text-white py-3 rounded-lg font-semibold disabled:opacity-40 transition-colors"
+                  >
+                    {submitting ? 'Submitting...' : `Submit availability for ${monthLabel(month)}`}
+                  </button>
+                  <p className="text-xs text-gray-600 text-center">
+                    Locks your dates until the schedule is published.
+                  </p>
+                </div>
+              )}
             </>
           )}
         </div>
