@@ -353,9 +353,6 @@ function ScheduleTab() {
                         >
                           {isAssigned && <span>✓</span>}
                           {s.name}
-                          {s.is_new && (
-                            <span className="text-honey text-[10px] font-bold">NEW</span>
-                          )}
                         </button>
                       )
                     })}
@@ -464,18 +461,13 @@ function StaffTab() {
               key={s.id}
               className={[
                 'flex items-center gap-3 rounded-xl px-4 py-3',
-                s.is_new ? 'bg-honey/10 border border-honey/30' : 'bg-forest',
+                'bg-forest',
               ].join(' ')}
             >
               <span className="text-cream/25 text-sm w-5 text-right shrink-0">{idx + 1}</span>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-1">
                   <span className="font-medium truncate">{s.name}</span>
-                  {s.is_new && (
-                    <span className="text-xs bg-honey text-cream px-1.5 py-0.5 rounded shrink-0">
-                      NEW
-                    </span>
-                  )}
                 </div>
                 <input
                   type="email"
