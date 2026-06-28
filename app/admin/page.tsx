@@ -36,27 +36,35 @@ function getMonthOptions() {
   return options
 }
 
-function fmtDate(dateStr: string) {
+function fmtDateLong(dateStr: string) {
   const [y, m, d] = dateStr.split('-').map(Number)
   return new Date(y, m - 1, d).toLocaleDateString('en-US', {
-    weekday: 'short',
-    month: 'short',
+    weekday: 'long',
+    month: 'long',
     day: 'numeric',
   })
 }
 
+function getCalendarWeeks(month: string): (string | null)[][] {
+  const [year, monthNum] = month.split('-').map(Number)
+  const firstDow = new Date(year, monthNum - 1, 1).getDay()
+  const numDays = new Date(year, monthNum, 0).getDate()
+  const cells: (string | null)[] = Array(firstDow).fill(null)
+  for (let d = 1; d <= numDays; d++) {
+    cells.push(`${month}-${String(d).padStart(2, '0')}`)
+  }
+  while (cells.length % 7 !== 0) cells.push(null)
+  const weeks: (string | null)[][] = []
+  for (let i = 0; i < cells.length; i += 7) weeks.push(cells.slice(i, i + 7))
+  return weeks
+}
+
 function ConfirmBadge({ status }: { status: string }) {
   if (status === 'confirmed')
-    return (
-      <span className="text-xs px-1.5 py-0.5 rounded bg-green-800 text-green-200">✓ Confirmed</span>
-    )
+    return <span className="text-xs px-1.5 py-0.5 rounded bg-green-800 text-green-200">✓ Confirmed</span>
   if (status === 'cancelled')
-    return (
-      <span className="text-xs px-1.5 py-0.5 rounded bg-red-900 text-red-300">✗ Cancelled</span>
-    )
-  return (
-    <span className="text-xs px-1.5 py-0.5 rounded bg-gray-700 text-gray-400">Reminder sent</span>
-  )
+    return <span className="text-xs px-1.5 py-0.5 rounded bg-red-900 text-red-300">✗ Cancelled</span>
+  return <span className="text-xs px-1.5 py-0.5 rounded bg-gray-700 text-gray-400">Reminder sent</span>
 }
 
 // ── Password gate ──────────────────────────────────────────────────────────────
@@ -111,7 +119,8 @@ function ScheduleTab() {
   const [month, setMonth] = useState(() => new Date().toISOString().slice(0, 7))
   const [data, setData] = useState<MonthData>({})
   const [loading, setLoading] = useState(false)
-  const [assigning, setAssigning] = useState<string | null>(null)
+  const [selectedDate, setSelectedDate] = useState<string | null>(null)
+  const [assigning, setAssigning] = useState(false)
   const [sending, setSending] = useState(false)
   const [sendResult, setSendResult] = useState<{ sent: number; missing: string[] } | null>(null)
   const monthOptions = getMonthOptions()
@@ -119,6 +128,7 @@ function ScheduleTab() {
 
   useEffect(() => {
     setSendResult(null)
+    setSelectedDate(null)
     setLoading(true)
     fetch(`/api/admin/month-view?month=${month}`)
       .then((r) => r.json())
@@ -127,7 +137,7 @@ function ScheduleTab() {
   }, [month])
 
   async function assign(date: string, name: string | null) {
-    setAssigning(date)
+    setAssigning(true)
     setData((prev) => ({
       ...prev,
       [date]: { ...prev[date], assigned: name, confirmStatus: null },
@@ -137,7 +147,7 @@ function ScheduleTab() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ date, staff_name: name }),
     })
-    setAssigning(null)
+    setAssigning(false)
   }
 
   async function sendSchedule() {
@@ -148,13 +158,16 @@ function ScheduleTab() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ month }),
     })
-    const data = await res.json()
-    setSendResult(data)
+    setSendResult(await res.json())
     setSending(false)
   }
 
+  const weeks = getCalendarWeeks(month)
+  const selected = selectedDate ? data[selectedDate] : null
+
   return (
     <div>
+      {/* Toolbar */}
       <div className="flex items-center justify-between mb-4 gap-3 flex-wrap">
         <div className="flex items-center gap-3">
           <button
@@ -179,9 +192,7 @@ function ScheduleTab() {
           onChange={(e) => setMonth(e.target.value)}
         >
           {monthOptions.map((o) => (
-            <option key={o.value} value={o.value}>
-              {o.label}
-            </option>
+            <option key={o.value} value={o.value}>{o.label}</option>
           ))}
         </select>
       </div>
@@ -189,73 +200,124 @@ function ScheduleTab() {
       {loading ? (
         <div className="text-gray-500 text-center py-12">Loading...</div>
       ) : (
-        <div className="space-y-2">
-          {Object.entries(data).map(([date, day]) => {
-            const isToday = date === today
-            const isPast = date < today
-            const isCancelled = day.confirmStatus === 'cancelled'
-            return (
-              <div
-                key={date}
-                className={[
-                  'rounded-xl p-4',
-                  isCancelled
-                    ? 'bg-red-950/40 border border-red-800/40'
-                    : isToday
-                      ? 'bg-amber-900/20 border border-amber-700/30'
-                      : isPast
-                        ? 'bg-gray-900/50'
-                        : 'bg-gray-800',
-                ].join(' ')}
-              >
-                <div className="flex items-start gap-4">
-                  <div className="flex-1 min-w-0">
-                    <div
-                      className={`text-sm font-medium mb-2 ${isPast ? 'text-gray-500' : 'text-gray-200'}`}
+        <>
+          {/* Calendar grid */}
+          <div className="grid grid-cols-7 mb-1">
+            {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((d) => (
+              <div key={d} className="text-center text-xs text-gray-500 py-1">{d}</div>
+            ))}
+          </div>
+          <div className="space-y-1 mb-4">
+            {weeks.map((week, wi) => (
+              <div key={wi} className="grid grid-cols-7 gap-1">
+                {week.map((date, di) => {
+                  if (!date) return <div key={`e-${wi}-${di}`} className="aspect-square" />
+                  const day = data[date]
+                  const isSelected = selectedDate === date
+                  const isToday = date === today
+                  const isPast = date < today
+                  const isCancelled = day?.confirmStatus === 'cancelled'
+                  const dayNum = parseInt(date.split('-')[2])
+
+                  return (
+                    <button
+                      key={date}
+                      onClick={() => setSelectedDate(isSelected ? null : date)}
+                      className={[
+                        'aspect-square rounded-lg p-1.5 flex flex-col text-left transition-colors',
+                        isSelected
+                          ? 'ring-2 ring-amber-500 bg-gray-700'
+                          : isCancelled
+                            ? 'bg-red-950/50 hover:bg-red-950'
+                            : day?.assigned
+                              ? 'bg-amber-900/30 hover:bg-amber-900/50'
+                              : isToday
+                                ? 'bg-amber-900/20 border border-amber-700/40 hover:bg-amber-900/30'
+                                : isPast
+                                  ? 'bg-gray-900/40 hover:bg-gray-900/60'
+                                  : 'bg-gray-800 hover:bg-gray-700',
+                      ].join(' ')}
                     >
-                      {fmtDate(date)}
-                    </div>
-                    {day.available.length === 0 ? (
-                      <span className="text-xs text-gray-600">No one available</span>
-                    ) : (
-                      <div className="flex flex-wrap gap-1.5">
-                        {day.available.map((s) => {
-                          const isAssigned = day.assigned === s.name
-                          return (
-                            <button
-                              key={s.name}
-                              onClick={() => assign(date, isAssigned ? null : s.name)}
-                              disabled={assigning === date}
-                              className={[
-                                'flex items-center gap-1 text-xs px-2.5 py-1 rounded-full font-medium transition-colors disabled:opacity-60',
-                                isAssigned
-                                  ? 'bg-amber-600 text-white'
-                                  : 'bg-gray-700 text-gray-300 hover:bg-gray-600',
-                              ].join(' ')}
-                            >
-                              {isAssigned && <span>✓</span>}
-                              {s.name}
-                              {s.is_new && (
-                                <span className="text-yellow-400 text-[10px] font-bold">NEW</span>
-                              )}
-                            </button>
-                          )
-                        })}
-                      </div>
-                    )}
-                  </div>
-                  {day.assigned && (
-                    <div className="text-right shrink-0 flex flex-col items-end gap-1.5">
-                      <div className="text-xs text-gray-500">Assigned</div>
-                      <div className="text-sm text-amber-400 font-medium">{day.assigned}</div>
-                      {day.confirmStatus && <ConfirmBadge status={day.confirmStatus} />}
-                    </div>
-                  )}
-                </div>
+                      <span className={`text-xs leading-none ${isPast && !day?.assigned ? 'text-gray-600' : 'text-gray-400'}`}>
+                        {dayNum}
+                      </span>
+                      {day?.assigned && (
+                        <span className={`text-[10px] font-semibold leading-tight mt-auto truncate ${isCancelled ? 'text-red-400' : isPast ? 'text-gray-500' : 'text-amber-400'}`}>
+                          {day.assigned.split(' ')[0]}
+                        </span>
+                      )}
+                      {!day?.assigned && (day?.available?.length ?? 0) > 0 && (
+                        <span className="mt-auto text-[8px] text-gray-600">
+                          {day.available.length} avail
+                        </span>
+                      )}
+                    </button>
+                  )
+                })}
               </div>
-            )
-          })}
-        </div>
+            ))}
+          </div>
+
+          {/* Selected date panel */}
+          {selectedDate && selected && (
+            <div className={[
+              'rounded-xl p-4 border',
+              selected.confirmStatus === 'cancelled'
+                ? 'bg-red-950/40 border-red-800/40'
+                : 'bg-gray-800 border-gray-700',
+            ].join(' ')}>
+              <div className="flex items-start justify-between mb-3">
+                <h2 className="font-semibold text-gray-100">{fmtDateLong(selectedDate)}</h2>
+                <button
+                  onClick={() => setSelectedDate(null)}
+                  className="text-gray-500 hover:text-gray-300 text-lg leading-none"
+                >
+                  ✕
+                </button>
+              </div>
+
+              {selected.available.length === 0 ? (
+                <p className="text-sm text-gray-600">No one marked as available.</p>
+              ) : (
+                <div>
+                  <p className="text-xs text-gray-500 mb-2">Available — click to assign:</p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {selected.available.map((s) => {
+                      const isAssigned = selected.assigned === s.name
+                      return (
+                        <button
+                          key={s.name}
+                          onClick={() => assign(selectedDate, isAssigned ? null : s.name)}
+                          disabled={assigning}
+                          className={[
+                            'flex items-center gap-1 text-sm px-3 py-1.5 rounded-full font-medium transition-colors disabled:opacity-60',
+                            isAssigned
+                              ? 'bg-amber-600 text-white'
+                              : 'bg-gray-700 text-gray-300 hover:bg-gray-600',
+                          ].join(' ')}
+                        >
+                          {isAssigned && <span>✓</span>}
+                          {s.name}
+                          {s.is_new && (
+                            <span className="text-yellow-400 text-[10px] font-bold">NEW</span>
+                          )}
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {selected.assigned && (
+                <div className="mt-3 pt-3 border-t border-gray-700 flex items-center gap-2">
+                  <span className="text-sm text-gray-400">Assigned:</span>
+                  <span className="text-sm text-amber-400 font-medium">{selected.assigned}</span>
+                  {selected.confirmStatus && <ConfirmBadge status={selected.confirmStatus} />}
+                </div>
+              )}
+            </div>
+          )}
+        </>
       )}
     </div>
   )
@@ -408,12 +470,92 @@ function StaffTab() {
   )
 }
 
+// ── Requests tab ──────────────────────────────────────────────────────────────
+
+type TimeOffRequest = {
+  id: string
+  staff_name: string
+  date: string
+  note: string | null
+  status: string
+}
+
+function fmtDateShort(dateStr: string) {
+  const [y, m, d] = dateStr.split('-').map(Number)
+  return new Date(y, m - 1, d).toLocaleDateString('en-US', {
+    weekday: 'short', month: 'short', day: 'numeric',
+  })
+}
+
+function RequestsTab() {
+  const [requests, setRequests] = useState<TimeOffRequest[]>([])
+  const [loading, setLoading] = useState(false)
+  const [working, setWorking] = useState<string | null>(null)
+
+  useEffect(() => {
+    setLoading(true)
+    fetch('/api/time-off?status=pending')
+      .then((r) => r.json())
+      .then(setRequests)
+      .finally(() => setLoading(false))
+  }, [])
+
+  async function respond(id: string, status: 'approved' | 'denied') {
+    setWorking(id)
+    await fetch('/api/time-off', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id, status }),
+    })
+    setRequests((prev) => prev.filter((r) => r.id !== id))
+    setWorking(null)
+  }
+
+  if (loading) return <div className="text-gray-500 text-center py-12">Loading...</div>
+
+  return (
+    <div>
+      {requests.length === 0 ? (
+        <div className="text-gray-600 text-center py-10">No pending time-off requests.</div>
+      ) : (
+        <div className="space-y-2">
+          {requests.map((r) => (
+            <div key={r.id} className="bg-gray-800 rounded-xl px-4 py-3 flex items-start gap-4">
+              <div className="flex-1 min-w-0">
+                <div className="font-medium">{r.staff_name}</div>
+                <div className="text-sm text-amber-400">{fmtDateShort(r.date)}</div>
+                {r.note && <div className="text-xs text-gray-400 mt-0.5">{r.note}</div>}
+              </div>
+              <div className="flex gap-2 shrink-0">
+                <button
+                  onClick={() => respond(r.id, 'approved')}
+                  disabled={working === r.id}
+                  className="text-xs bg-green-700 hover:bg-green-600 text-white px-3 py-1.5 rounded-lg transition-colors disabled:opacity-50"
+                >
+                  Approve
+                </button>
+                <button
+                  onClick={() => respond(r.id, 'denied')}
+                  disabled={working === r.id}
+                  className="text-xs bg-gray-700 hover:bg-gray-600 text-gray-300 px-3 py-1.5 rounded-lg transition-colors disabled:opacity-50"
+                >
+                  Deny
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
 // ── Main admin page ────────────────────────────────────────────────────────────
 
 export default function AdminPage() {
   const [authChecked, setAuthChecked] = useState(false)
   const [isAuthed, setIsAuthed] = useState(false)
-  const [tab, setTab] = useState<'schedule' | 'staff'>('schedule')
+  const [tab, setTab] = useState<'schedule' | 'staff' | 'requests'>('schedule')
 
   useEffect(() => {
     fetch('/api/auth')
@@ -431,22 +573,20 @@ export default function AdminPage() {
     <main className="max-w-2xl mx-auto px-4 py-10">
       <h1 className="text-xl font-bold mb-6">Admin</h1>
       <div className="flex gap-2 mb-6">
-        {(['schedule', 'staff'] as const).map((t) => (
+        {(['schedule', 'staff', 'requests'] as const).map((t) => (
           <button
             key={t}
             onClick={() => setTab(t)}
             className={[
               'px-4 py-2 rounded-lg text-sm font-medium capitalize transition-colors',
-              tab === t
-                ? 'bg-amber-600 text-white'
-                : 'bg-gray-800 text-gray-400 hover:text-white',
+              tab === t ? 'bg-amber-600 text-white' : 'bg-gray-800 text-gray-400 hover:text-white',
             ].join(' ')}
           >
             {t}
           </button>
         ))}
       </div>
-      {tab === 'schedule' ? <ScheduleTab /> : <StaffTab />}
+      {tab === 'schedule' ? <ScheduleTab /> : tab === 'staff' ? <StaffTab /> : <RequestsTab />}
     </main>
   )
 }

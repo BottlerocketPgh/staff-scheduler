@@ -20,6 +20,13 @@ export default function Home() {
           <div className="font-semibold">Schedule</div>
           <div className="text-gray-400 text-sm mt-0.5">See who&apos;s working each night</div>
         </Link>
+        <Link
+          href="/my-schedule"
+          className="bg-gray-800 hover:bg-gray-700 rounded-xl p-5 block transition-colors"
+        >
+          <div className="font-semibold">My Schedule</div>
+          <div className="text-gray-400 text-sm mt-0.5">View your shifts and request time off</div>
+        </Link>
       </div>
     </main>
   )

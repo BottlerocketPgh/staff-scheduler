@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
 import { COOKIE_NAME, getExpectedToken } from '@/lib/auth'
-import { sendSchedulePublished } from '@/lib/email'
+import { sendFullSchedule } from '@/lib/email'
 
 function isAdmin(req: NextRequest) {
   return req.cookies.get(COOKIE_NAME)?.value === getExpectedToken()
@@ -17,36 +17,26 @@ export async function POST(req: NextRequest) {
   const start = `${month}-01`
   const end = new Date(year, monthNum, 0).toISOString().split('T')[0]
 
-  const { data: assignments } = await supabase
-    .from('assignments')
-    .select('date, staff_name')
-    .gte('date', start)
-    .lte('date', end)
+  const [assignRes, staffRes] = await Promise.all([
+    supabase.from('assignments').select('date, staff_name').gte('date', start).lte('date', end),
+    supabase.from('staff').select('name, email').eq('active', true),
+  ])
 
-  if (!assignments?.length) {
+  const assignments = assignRes.data ?? []
+
+  if (assignments.length === 0) {
     return NextResponse.json({ sent: 0, missing: [], noAssignments: true })
   }
-
-  const byPerson: Record<string, string[]> = {}
-  for (const row of assignments) {
-    if (!byPerson[row.staff_name]) byPerson[row.staff_name] = []
-    byPerson[row.staff_name].push(row.date)
-  }
-
-  const names = Object.keys(byPerson)
-  const { data: staffList } = await supabase.from('staff').select('name, email').in('name', names)
-  const emailMap = new Map((staffList ?? []).map((s) => [s.name, s.email as string | null]))
 
   const missing: string[] = []
   let sent = 0
 
-  for (const [name, dates] of Object.entries(byPerson)) {
-    const email = emailMap.get(name)
-    if (!email) {
-      missing.push(name)
+  for (const staffMember of staffRes.data ?? []) {
+    if (!staffMember.email) {
+      missing.push(staffMember.name)
       continue
     }
-    await sendSchedulePublished(email, name, dates)
+    await sendFullSchedule(staffMember.email, staffMember.name, month, assignments)
     sent++
   }
 
