@@ -113,7 +113,7 @@ export default function SchedulePage() {
                         {dayNum}
                       </span>
                       {assigned && (
-                        <span className={`text-[10px] font-semibold leading-tight mt-auto truncate ${isPast ? 'text-forest/30' : 'text-honey'}`}>
+                        <span className={`text-[10px] font-semibold leading-tight mt-auto truncate ${isPast ? 'text-forest/30' : 'text-rust'}`}>
                           {assigned.split(' ')[0]}
                         </span>
                       )}

@@ -300,7 +300,7 @@ function ScheduleTab() {
                         {dayNum}
                       </span>
                       {day?.assigned && (
-                        <span className={`text-[10px] font-semibold leading-tight mt-auto truncate ${isCancelled ? 'text-red-400' : isPast ? 'text-forest/40' : 'text-honey'}`}>
+                        <span className={`text-[10px] font-semibold leading-tight mt-auto truncate ${isCancelled ? 'text-red-400' : isPast ? 'text-forest/40' : 'text-rust'}`}>
                           {day.assigned.split(' ')[0]}
                         </span>
                       )}
