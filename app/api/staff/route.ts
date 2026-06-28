@@ -102,6 +102,14 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json({ ok: true })
   }
 
+  if (body.action === 'update_phone') {
+    await supabase
+      .from('staff')
+      .update({ phone: body.phone?.trim() || null })
+      .eq('id', body.id)
+    return NextResponse.json({ ok: true })
+  }
+
   if (body.action === 'rename') {
     if (!body.name?.trim()) return NextResponse.json({ error: 'Name required' }, { status: 400 })
     await supabase.from('staff').update({ name: body.name.trim() }).eq('id', body.id)

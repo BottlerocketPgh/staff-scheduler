@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
 import { COOKIE_NAME, getExpectedToken } from '@/lib/auth'
+import { textAvailabilitySubmitted } from '@/lib/sms'
 
 function isAdmin(req: NextRequest) {
   return req.cookies.get(COOKIE_NAME)?.value === getExpectedToken()
@@ -44,6 +45,7 @@ export async function POST(req: NextRequest) {
     .upsert({ staff_name: name, month }, { onConflict: 'staff_name,month' })
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  await textAvailabilitySubmitted(name, month)
   return NextResponse.json({ ok: true })
 }
 

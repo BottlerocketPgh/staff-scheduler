@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
 import { COOKIE_NAME, getExpectedToken } from '@/lib/auth'
-import { sendSchedulePublished } from '@/lib/email'
+import { textSchedulePublished } from '@/lib/sms'
 
 function isAdmin(req: NextRequest) {
   return req.cookies.get(COOKIE_NAME)?.value === getExpectedToken()
@@ -19,7 +19,7 @@ export async function POST(req: NextRequest) {
 
   const [assignRes, staffRes] = await Promise.all([
     supabase.from('assignments').select('date, staff_name').gte('date', start).lte('date', end),
-    supabase.from('staff').select('name, email').eq('active', true),
+    supabase.from('staff').select('name, phone').eq('active', true),
   ])
 
   const assignments = assignRes.data ?? []
@@ -28,25 +28,21 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ sent: 0, missing: [], noAssignments: true })
   }
 
-  // Group dates by assigned person
   const byPerson: Record<string, string[]> = {}
   for (const row of assignments) {
     if (!byPerson[row.staff_name]) byPerson[row.staff_name] = []
     byPerson[row.staff_name].push(row.date)
   }
 
-  const emailMap = new Map((staffRes.data ?? []).map((s) => [s.name, s.email as string | null]))
+  const phoneMap = new Map((staffRes.data ?? []).map((s) => [s.name, s.phone as string | null]))
 
   const missing: string[] = []
   let sent = 0
 
   for (const [name, dates] of Object.entries(byPerson)) {
-    const email = emailMap.get(name)
-    if (!email) {
-      missing.push(name)
-      continue
-    }
-    await sendSchedulePublished(email, name, dates)
+    const phone = phoneMap.get(name)
+    if (!phone) { missing.push(name); continue }
+    await textSchedulePublished(phone, name, dates)
     sent++
   }
 

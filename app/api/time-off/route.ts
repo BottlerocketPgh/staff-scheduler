@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
 import { COOKIE_NAME, getExpectedToken } from '@/lib/auth'
-import { sendTimeOffRequest } from '@/lib/email'
+import { textTimeOffToAdmin, textSubNeeded } from '@/lib/sms'
 
 function isAdmin(req: NextRequest) {
   return req.cookies.get(COOKIE_NAME)?.value === getExpectedToken()
@@ -52,9 +52,25 @@ export async function POST(req: NextRequest) {
     .upsert({ staff_name, date, note: note || null, status: 'pending' }, { onConflict: 'staff_name,date' })
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
-  const adminEmail = process.env.ADMIN_EMAIL
-  if (adminEmail) {
-    await sendTimeOffRequest(adminEmail, staff_name, date, note || null)
+  // Text admin about the request
+  await textTimeOffToAdmin(staff_name, date, note || null)
+
+  // Find other available staff for that date and text them about the sub needed
+  const { data: availRows } = await supabase
+    .from('availability')
+    .select('staff_name')
+    .eq('date', date)
+    .neq('staff_name', staff_name)
+
+  if (availRows?.length) {
+    const names = availRows.map((r) => r.staff_name)
+    const { data: staffRows } = await supabase
+      .from('staff')
+      .select('phone')
+      .in('name', names)
+      .eq('active', true)
+    const phones = (staffRows ?? []).map((s) => s.phone).filter(Boolean) as string[]
+    if (phones.length) await textSubNeeded(phones, staff_name, date)
   }
 
   return NextResponse.json({ ok: true })
@@ -65,7 +81,6 @@ export async function PATCH(req: NextRequest) {
   if (!isAdmin(req)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   const { id, status } = await req.json()
   if (!id || !status) return NextResponse.json({ error: 'Missing params' }, { status: 400 })
-
   const { error } = await supabase.from('time_off_requests').update({ status }).eq('id', id)
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   return NextResponse.json({ ok: true })
@@ -75,7 +90,6 @@ export async function PATCH(req: NextRequest) {
 export async function DELETE(req: NextRequest) {
   const { staff_name, date } = await req.json()
   if (!staff_name || !date) return NextResponse.json({ error: 'Missing params' }, { status: 400 })
-
   const { error } = await supabase
     .from('time_off_requests')
     .delete()

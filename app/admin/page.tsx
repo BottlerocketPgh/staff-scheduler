@@ -8,6 +8,7 @@ type StaffMember = {
   id: string
   name: string
   email: string | null
+  phone: string | null
   priority_order: number
   is_new: boolean
   active: boolean
@@ -538,6 +539,14 @@ function StaffTab() {
     })
   }
 
+  async function savePhone(id: string, phone: string) {
+    await fetch('/api/staff', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'update_phone', id, phone }),
+    })
+  }
+
   async function saveName(id: string) {
     const name = editingName.trim()
     if (!name) { setEditingId(null); return }
@@ -594,13 +603,22 @@ function StaffTab() {
                   {s.name}
                 </button>
               )}
-              <input
-                type="email"
-                defaultValue={s.email ?? ''}
-                onBlur={(e) => saveEmail(s.id, e.target.value)}
-                placeholder="email@example.com"
-                className="mt-1 text-xs bg-white border border-forest/20 rounded px-2 py-1 text-forest/70 w-full max-w-[220px] outline-none focus:ring-1 focus:ring-rust placeholder-forest/30"
-              />
+              <div className="flex gap-2 mt-1 flex-wrap">
+                <input
+                  type="email"
+                  defaultValue={s.email ?? ''}
+                  onBlur={(e) => saveEmail(s.id, e.target.value)}
+                  placeholder="email@example.com"
+                  className="text-xs bg-white border border-forest/20 rounded px-2 py-1 text-forest/70 w-full max-w-[180px] outline-none focus:ring-1 focus:ring-rust placeholder-forest/30"
+                />
+                <input
+                  type="tel"
+                  defaultValue={s.phone ?? ''}
+                  onBlur={(e) => savePhone(s.id, e.target.value)}
+                  placeholder="+14121234567"
+                  className="text-xs bg-white border border-forest/20 rounded px-2 py-1 text-forest/70 w-full max-w-[140px] outline-none focus:ring-1 focus:ring-rust placeholder-forest/30"
+                />
+              </div>
             </div>
             <div className="flex items-center gap-2 shrink-0">
               <button onClick={() => move(s.id, 'up')} disabled={working || idx === 0} className="text-forest/50 hover:text-forest-dark disabled:opacity-20 text-lg leading-none px-1">↑</button>

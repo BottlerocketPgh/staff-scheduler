@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
-import { sendShiftReminder } from '@/lib/email'
+import { textShiftReminder } from '@/lib/sms'
 import { randomUUID } from 'crypto'
 
 export async function GET(req: NextRequest) {
@@ -23,11 +23,11 @@ export async function GET(req: NextRequest) {
   for (const row of assignments) {
     const { data: staff } = await supabase
       .from('staff')
-      .select('email')
+      .select('phone')
       .eq('name', row.staff_name)
       .single()
 
-    if (!staff?.email) continue
+    if (!staff?.phone) continue
 
     const token = randomUUID()
 
@@ -43,7 +43,7 @@ export async function GET(req: NextRequest) {
       { onConflict: 'date' }
     )
 
-    await sendShiftReminder(staff.email, row.staff_name, row.date, token)
+    await textShiftReminder(staff.phone, row.staff_name, row.date, token)
     sent++
   }
 
