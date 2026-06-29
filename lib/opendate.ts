@@ -68,32 +68,39 @@ export async function fetchEvents(start: string, end: string): Promise<Record<st
   const token = await getValidToken()
   if (!token) return {}
 
-  const params = new URLSearchParams({
-    'q[start_date_gteq]': start,
-    'q[start_date_lteq]': end,
-    per_page: '100',
-  })
-
-  const res = await fetch(`${BASE}/api/v2/confirms?${params}`, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-      Accept: 'application/json',
-    },
-  })
-
-  if (!res.ok) return {}
-
-  const data = await res.json()
   const events: Record<string, { name: string; url: string }[]> = {}
-  for (const e of data.collection ?? []) {
-    if (e.start_date && e.name) {
-      const entry = {
-        name: e.name,
-        url: e.public_ticketing_url ?? `${BASE}/teams/${e.team_id}/confirms/${e.id}`,
+  let page = 1
+
+  // Paginate through all confirms — server-side date filter is unreliable,
+  // so we fetch everything and filter client-side by start_date.
+  while (page <= 20) {
+    const params = new URLSearchParams({
+      'q[start_date_gteq]': start,
+      'q[start_date_lteq]': end,
+      per_page: '100',
+      page: String(page),
+    })
+
+    const res = await fetch(`${BASE}/api/v2/confirms?${params}`, {
+      headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+    })
+    if (!res.ok) break
+
+    const data = await res.json()
+    for (const e of data.collection ?? []) {
+      if (e.start_date && e.name && e.start_date >= start && e.start_date <= end) {
+        const entry = {
+          name: e.name,
+          url: e.public_ticketing_url ?? `${BASE}/teams/${e.team_id}/confirms/${e.id}`,
+        }
+        if (!events[e.start_date]) events[e.start_date] = []
+        events[e.start_date].push(entry)
       }
-      if (!events[e.start_date]) events[e.start_date] = []
-      events[e.start_date].push(entry)
     }
+
+    if (!data.has_more) break
+    page++
   }
+
   return events
 }
