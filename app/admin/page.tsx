@@ -751,12 +751,99 @@ function RequestsTab() {
   )
 }
 
+// ── Subs tab ───────────────────────────────────────────────────────────────────
+
+type SubClaim = {
+  token: string
+  staff_name: string
+  absent_staff_name: string
+  date: string
+  status: 'pending' | 'claimed' | 'declined'
+  created_at: string
+}
+
+type SubIncident = {
+  key: string
+  date: string
+  absentName: string
+  claims: SubClaim[]
+}
+
+function SubsTab() {
+  const [incidents, setIncidents] = useState<SubIncident[]>([])
+  const [loading, setLoading] = useState(false)
+
+  useEffect(() => {
+    setLoading(true)
+    fetch('/api/sub?all=true')
+      .then((r) => r.json())
+      .then((claims: SubClaim[]) => {
+        const map = new Map<string, SubIncident>()
+        for (const c of claims) {
+          const key = `${c.date}__${c.absent_staff_name}`
+          if (!map.has(key)) map.set(key, { key, date: c.date, absentName: c.absent_staff_name, claims: [] })
+          map.get(key)!.claims.push(c)
+        }
+        setIncidents(Array.from(map.values()))
+      })
+      .finally(() => setLoading(false))
+  }, [])
+
+  if (loading) return <div className="text-forest/40 text-center py-12">Loading...</div>
+
+  if (incidents.length === 0) {
+    return <div className="text-forest/25 text-center py-10">No sub requests yet.</div>
+  }
+
+  return (
+    <div className="space-y-3">
+      {incidents.map((inc) => {
+        const covered = inc.claims.some((c) => c.status === 'claimed')
+        const pending = inc.claims.filter((c) => c.status === 'pending').length
+        return (
+          <div key={inc.key} className="bg-white border border-forest/10 rounded-xl px-4 py-3">
+            <div className="flex items-start justify-between gap-3 mb-2">
+              <div>
+                <span className="font-medium text-forest-dark">{fmtDateShort(inc.date)}</span>
+                <span className="text-forest/40 text-sm ml-2">— {inc.absentName} can't make it</span>
+              </div>
+              {covered ? (
+                <span className="text-xs px-2 py-0.5 rounded-full bg-steel/15 text-steel-dark font-medium shrink-0">Covered</span>
+              ) : (
+                <span className="text-xs px-2 py-0.5 rounded-full bg-honey/20 text-honey-dark font-medium shrink-0">
+                  {pending > 0 ? `${pending} pending` : 'Uncovered'}
+                </span>
+              )}
+            </div>
+            <div className="space-y-1">
+              {inc.claims.map((c) => (
+                <div key={c.token} className="flex items-center gap-2 text-sm">
+                  <span className="text-forest/70 w-32 truncate">{c.staff_name}</span>
+                  {c.status === 'claimed' && (
+                    <span className="text-xs text-steel font-medium">✓ Can cover</span>
+                  )}
+                  {c.status === 'declined' && (
+                    <span className="text-xs text-forest/40">✗ Can't make it</span>
+                  )}
+                  {c.status === 'pending' && (
+                    <span className="text-xs text-forest/30">No response</span>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
 // ── Main admin page ────────────────────────────────────────────────────────────
 
 export default function AdminPage() {
   const [authChecked, setAuthChecked] = useState(false)
   const [isAuthed, setIsAuthed] = useState(false)
-  const [tab, setTab] = useState<'schedule' | 'staff' | 'requests'>('schedule')
+  const [tab, setTab] = useState<'schedule' | 'staff' | 'requests' | 'subs'>('schedule')
 
   useEffect(() => {
     fetch('/api/auth')
@@ -775,8 +862,8 @@ export default function AdminPage() {
       <Link href="/" className="text-forest-dark font-bold tracking-tight hover:text-rust transition-colors">Flight Deck</Link>
       <p className="text-forest/40 text-xs mb-1">a scheduling tool by Bottlerocket</p>
       <h1 className="text-xl font-bold text-forest-dark mb-6">Admin</h1>
-      <div className="flex gap-2 mb-6">
-        {(['schedule', 'staff', 'requests'] as const).map((t) => (
+      <div className="flex gap-2 mb-6 flex-wrap">
+        {(['schedule', 'staff', 'requests', 'subs'] as const).map((t) => (
           <button
             key={t}
             onClick={() => setTab(t)}
@@ -789,7 +876,7 @@ export default function AdminPage() {
           </button>
         ))}
       </div>
-      {tab === 'schedule' ? <ScheduleTab /> : tab === 'staff' ? <StaffTab /> : <RequestsTab />}
+      {tab === 'schedule' ? <ScheduleTab /> : tab === 'staff' ? <StaffTab /> : tab === 'requests' ? <RequestsTab /> : <SubsTab />}
     </main>
   )
 }
