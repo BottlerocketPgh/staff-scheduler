@@ -69,8 +69,8 @@ export async function fetchEvents(start: string, end: string): Promise<Record<st
   if (!token) return {}
 
   const params = new URLSearchParams({
-    'q[starts_at_gteq]': start,
-    'q[starts_at_lteq]': end,
+    'q[start_date_gteq]': start,
+    'q[start_date_lteq]': end,
     per_page: '100',
   })
 
@@ -86,14 +86,11 @@ export async function fetchEvents(start: string, end: string): Promise<Record<st
   const data = await res.json()
   const events: Record<string, { name: string; url: string }> = {}
   for (const e of data.collection ?? []) {
-    const rawDate = e.start_date ?? e.starts_at
-    if (rawDate && e.name) {
-      const dateKey = String(rawDate).slice(0, 10)
-      const teamId = e.team_id ?? process.env.OPENDATE_TEAM_ID
-      const url = teamId
-        ? `${BASE}/teams/${teamId}/confirms/${e.id}`
-        : `${BASE}/confirms/${e.id}`
-      events[dateKey] = { name: e.name, url }
+    if (e.start_date && e.name) {
+      events[e.start_date] = {
+        name: e.name,
+        url: e.public_ticketing_url ?? `${BASE}/teams/${e.team_id}/confirms/${e.id}`,
+      }
     }
   }
   return events
