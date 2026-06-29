@@ -143,7 +143,7 @@ function ScheduleTab() {
   const monthOptions = getMonthOptions()
   const today = new Date().toISOString().split('T')[0]
 
-  const CACHE_KEY = 'od_events_v2'
+  const CACHE_KEY = 'od_events_v3'
   const CACHE_TTL = 4 * 60 * 60 * 1000 // 4 hours
 
   function readEventsCache(m: string): Record<string, { name: string; url: string }[]> | null {

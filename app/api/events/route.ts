@@ -14,7 +14,8 @@ export async function GET(req: NextRequest) {
   if (month) {
     const [y, m] = month.split('-').map(Number)
     const start = `${month}-01`
-    const end = new Date(y, m, 0).toISOString().split('T')[0]
+    // Use first day of next month so late-night events on the last day aren't excluded
+    const end = new Date(y, m, 1).toISOString().split('T')[0]
     const events = await fetchEvents(start, end)
     return NextResponse.json(events)
   }

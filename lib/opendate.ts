@@ -82,13 +82,14 @@ export async function fetchEvents(start: string, end: string): Promise<Record<st
   const data = await res.json()
   const events: Record<string, { name: string; url: string }[]> = {}
   for (const e of data.collection ?? []) {
-    if (e.start_date && e.name) {
+    const dateKey = e.start_date ?? (e.start_time ? String(e.start_time).slice(0, 10) : null)
+    if (dateKey && e.name) {
       const entry = {
         name: e.name,
         url: e.public_ticketing_url ?? `${BASE}/teams/${e.team_id}/confirms/${e.id}`,
       }
-      if (!events[e.start_date]) events[e.start_date] = []
-      events[e.start_date].push(entry)
+      if (!events[dateKey]) events[dateKey] = []
+      events[dateKey].push(entry)
     }
   }
   return events
