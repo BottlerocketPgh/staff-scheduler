@@ -139,6 +139,7 @@ function ScheduleTab() {
   const [unlockingName, setUnlockingName] = useState<string | null>(null)
   const [noTechDates, setNoTechDates] = useState<Set<string>>(new Set())
   const [events, setEvents] = useState<Record<string, { name: string; url: string }>>({})
+  const [eventLoading, setEventLoading] = useState(false)
   const monthOptions = getMonthOptions()
   const today = new Date().toISOString().split('T')[0]
 
@@ -160,19 +161,28 @@ function ScheduleTab() {
         setNoTechDates(new Set(noTechList as string[]))
       })
       .finally(() => setLoading(false))
-
-    // Load OpenDate events in background — doesn't block calendar render
-    fetch(`/api/events?month=${m}`)
-      .then((r) => r.json())
-      .then((eventsData) => {
-        if (eventsData && typeof eventsData === 'object' && !eventsData.error) {
-          setEvents(eventsData)
-        }
-      })
-      .catch(() => {})
   }
 
   useEffect(() => { loadMonth(month) }, [month])
+
+  function selectDate(date: string) {
+    const next = selectedDate === date ? null : date
+    setSelectedDate(next)
+    if (!next || events[next] !== undefined) return
+    setEventLoading(true)
+    fetch(`/api/events?date=${next}`)
+      .then((r) => r.json())
+      .then((eventsData) => {
+        if (eventsData && typeof eventsData === 'object' && !eventsData.error) {
+          setEvents((prev) => ({ ...prev, ...eventsData }))
+        } else {
+          // Mark as checked so we don't re-fetch
+          setEvents((prev) => ({ ...prev, [next]: { name: '', url: '' } }))
+        }
+      })
+      .catch(() => {})
+      .finally(() => setEventLoading(false))
+  }
 
   async function assign(date: string, name: string | null) {
     setAssigning(true)
@@ -324,7 +334,7 @@ function ScheduleTab() {
                   return (
                     <button
                       key={date}
-                      onClick={() => setSelectedDate(isSelected ? null : date)}
+                      onClick={() => selectDate(date)}
                       className={[
                         'aspect-square rounded-lg p-1.5 flex flex-col text-left transition-colors',
                         isSelected
@@ -442,7 +452,10 @@ function ScheduleTab() {
               <div className="flex items-start justify-between mb-3">
                 <div>
                   <h2 className="font-semibold text-forest-dark">{fmtDateLong(selectedDate)}</h2>
-                  {events[selectedDate] && (
+                  {eventLoading && (
+                    <p className="text-xs text-forest/30 mt-0.5">Loading event...</p>
+                  )}
+                  {!eventLoading && events[selectedDate]?.name && (
                     <a
                       href={events[selectedDate].url}
                       target="_blank"

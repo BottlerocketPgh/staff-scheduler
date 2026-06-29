@@ -64,13 +64,9 @@ export async function getValidToken(): Promise<string | null> {
   return tokens.access_token
 }
 
-export async function fetchEvents(month: string): Promise<Record<string, { name: string; url: string }>> {
+export async function fetchEvents(start: string, end: string): Promise<Record<string, { name: string; url: string }>> {
   const token = await getValidToken()
   if (!token) return {}
-
-  const [y, m] = month.split('-').map(Number)
-  const start = `${month}-01`
-  const end = new Date(y, m, 0).toISOString().split('T')[0]
 
   const params = new URLSearchParams({
     'q[starts_at_gteq]': start,
