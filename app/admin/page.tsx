@@ -138,15 +138,17 @@ function ScheduleTab() {
   const [showSubmissions, setShowSubmissions] = useState(false)
   const [unlockingName, setUnlockingName] = useState<string | null>(null)
   const [noTechDates, setNoTechDates] = useState<Set<string>>(new Set())
-  const [events, setEvents] = useState<Record<string, { name: string; url: string }>>({})
+  const [events, setEvents] = useState<Record<string, { name: string; url: string }[]>>({})
+  const [eventsLoading, setEventsLoading] = useState(false)
   const monthOptions = getMonthOptions()
   const today = new Date().toISOString().split('T')[0]
 
+  const CACHE_KEY = 'od_events_v2'
   const CACHE_TTL = 4 * 60 * 60 * 1000 // 4 hours
 
-  function readEventsCache(m: string): Record<string, { name: string; url: string }> | null {
+  function readEventsCache(m: string): Record<string, { name: string; url: string }[]> | null {
     try {
-      const raw = localStorage.getItem(`od_events_${m}`)
+      const raw = localStorage.getItem(`${CACHE_KEY}_${m}`)
       if (!raw) return null
       const { data, ts } = JSON.parse(raw)
       if (Date.now() - ts > CACHE_TTL) return null
@@ -154,9 +156,9 @@ function ScheduleTab() {
     } catch { return null }
   }
 
-  function writeEventsCache(m: string, data: Record<string, { name: string; url: string }>) {
+  function writeEventsCache(m: string, data: Record<string, { name: string; url: string }[]>) {
     try {
-      localStorage.setItem(`od_events_${m}`, JSON.stringify({ data, ts: Date.now() }))
+      localStorage.setItem(`${CACHE_KEY}_${m}`, JSON.stringify({ data, ts: Date.now() }))
     } catch {}
   }
 
@@ -166,8 +168,22 @@ function ScheduleTab() {
     setLoading(true)
 
     const cached = readEventsCache(m)
-    if (cached) setEvents(cached)
-    else setEvents({})
+    if (cached) {
+      setEvents(cached)
+    } else {
+      setEvents({})
+      setEventsLoading(true)
+      fetch(`/api/events?month=${m}`)
+        .then((r) => r.json())
+        .then((eventsData) => {
+          if (eventsData && typeof eventsData === 'object' && !eventsData.error) {
+            setEvents(eventsData)
+            writeEventsCache(m, eventsData)
+          }
+        })
+        .catch(() => {})
+        .finally(() => setEventsLoading(false))
+    }
 
     Promise.all([
       fetch(`/api/admin/month-view?month=${m}`).then((r) => r.json()),
@@ -183,17 +199,6 @@ function ScheduleTab() {
       })
       .finally(() => setLoading(false))
 
-    if (!cached) {
-      fetch(`/api/events?month=${m}`)
-        .then((r) => r.json())
-        .then((eventsData) => {
-          if (eventsData && typeof eventsData === 'object' && !eventsData.error) {
-            setEvents(eventsData)
-            writeEventsCache(m, eventsData)
-          }
-        })
-        .catch(() => {})
-    }
   }
 
   useEffect(() => { loadMonth(month) }, [month])
@@ -466,16 +471,20 @@ function ScheduleTab() {
               <div className="flex items-start justify-between mb-3">
                 <div>
                   <h2 className="font-semibold text-forest-dark">{fmtDateLong(selectedDate)}</h2>
-                  {events[selectedDate]?.name && (
+                  {eventsLoading && (
+                    <p className="text-xs text-forest/30 mt-0.5">Loading events...</p>
+                  )}
+                  {(events[selectedDate] ?? []).map((ev) => (
                     <a
-                      href={events[selectedDate].url}
+                      key={ev.url}
+                      href={ev.url}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-xs text-steel hover:text-steel-dark underline mt-0.5 block"
                     >
-                      {events[selectedDate].name}
+                      {ev.name}
                     </a>
-                  )}
+                  ))}
                 </div>
                 <button
                   onClick={() => setSelectedDate(null)}

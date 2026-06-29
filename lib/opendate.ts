@@ -64,7 +64,7 @@ export async function getValidToken(): Promise<string | null> {
   return tokens.access_token
 }
 
-export async function fetchEvents(start: string, end: string): Promise<Record<string, { name: string; url: string }>> {
+export async function fetchEvents(start: string, end: string): Promise<Record<string, { name: string; url: string }[]>> {
   const token = await getValidToken()
   if (!token) return {}
 
@@ -84,13 +84,15 @@ export async function fetchEvents(start: string, end: string): Promise<Record<st
   if (!res.ok) return {}
 
   const data = await res.json()
-  const events: Record<string, { name: string; url: string }> = {}
+  const events: Record<string, { name: string; url: string }[]> = {}
   for (const e of data.collection ?? []) {
     if (e.start_date && e.name) {
-      events[e.start_date] = {
+      const entry = {
         name: e.name,
         url: e.public_ticketing_url ?? `${BASE}/teams/${e.team_id}/confirms/${e.id}`,
       }
+      if (!events[e.start_date]) events[e.start_date] = []
+      events[e.start_date].push(entry)
     }
   }
   return events
