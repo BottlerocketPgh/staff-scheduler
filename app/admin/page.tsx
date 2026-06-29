@@ -137,6 +137,7 @@ function ScheduleTab() {
   const [allStaff, setAllStaff] = useState<string[]>([])
   const [showSubmissions, setShowSubmissions] = useState(false)
   const [unlockingName, setUnlockingName] = useState<string | null>(null)
+  const [confirmedAssignments, setConfirmedAssignments] = useState<Record<string, string | null> | null>(null)
   const [noTechDates, setNoTechDates] = useState<Set<string>>(new Set())
   const [events, setEvents] = useState<Record<string, { name: string; url: string }[]>>({})
   const [eventsLoading, setEventsLoading] = useState(false)
@@ -166,6 +167,7 @@ function ScheduleTab() {
     setSendResult(null)
     setSelectedDate(null)
     setLoading(true)
+    setConfirmedAssignments(null)
 
     const cached = readEventsCache(m)
     if (cached) {
@@ -227,6 +229,7 @@ function ScheduleTab() {
     })
     setSendResult(await res.json())
     setSending(false)
+    setConfirmedAssignments(snapshotAssignments())
     // Auto-unlock all submissions for this month after publishing
     await fetch('/api/availability/submit', {
       method: 'DELETE',
@@ -235,6 +238,40 @@ function ScheduleTab() {
     })
     setSubmissions([])
   }
+
+  function snapshotAssignments(): Record<string, string | null> {
+    const snap: Record<string, string | null> = {}
+    for (const [date, day] of Object.entries(data)) snap[date] = day.assigned ?? null
+    return snap
+  }
+
+  async function publishUpdated(changedStaff: Set<string>) {
+    setSending(true)
+    const res = await fetch('/api/admin/publish', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ month, onlyStaff: Array.from(changedStaff) }),
+    })
+    setSendResult(await res.json())
+    setSending(false)
+    setConfirmedAssignments(snapshotAssignments())
+  }
+
+  const pendingChanges = (() => {
+    if (!confirmedAssignments) return { count: 0, staff: new Set<string>() }
+    const staff = new Set<string>()
+    let count = 0
+    for (const [date, day] of Object.entries(data)) {
+      const prev = confirmedAssignments[date] ?? null
+      const curr = day.assigned ?? null
+      if (prev !== curr) {
+        count++
+        if (prev) staff.add(prev)
+        if (curr) staff.add(curr)
+      }
+    }
+    return { count, staff }
+  })()
 
   async function unlockAll() {
     setUnlocking(true)
@@ -300,6 +337,15 @@ function ScheduleTab() {
               className="text-sm text-forest/50 hover:text-forest-dark underline transition-colors"
             >
               {submissions.length}/{allStaff.length} submitted availability
+            </button>
+          )}
+          {pendingChanges.count > 0 && (
+            <button
+              onClick={() => publishUpdated(pendingChanges.staff)}
+              disabled={sending}
+              className="bg-honey hover:bg-honey-dark text-forest-dark text-sm px-4 py-2 rounded-lg font-medium disabled:opacity-50 transition-colors"
+            >
+              {sending ? 'Sending...' : `Publish updated schedule (${pendingChanges.count} change${pendingChanges.count === 1 ? '' : 's'})`}
             </button>
           )}
           {sendResult && (

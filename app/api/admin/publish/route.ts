@@ -10,7 +10,7 @@ function isAdmin(req: NextRequest) {
 export async function POST(req: NextRequest) {
   if (!isAdmin(req)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const { month } = await req.json()
+  const { month, onlyStaff } = await req.json()
   if (!month) return NextResponse.json({ error: 'Missing month' }, { status: 400 })
 
   const [year, monthNum] = month.split('-').map(Number)
@@ -39,7 +39,10 @@ export async function POST(req: NextRequest) {
   const missing: string[] = []
   let sent = 0
 
+  const onlySet = onlyStaff ? new Set<string>(onlyStaff) : null
+
   for (const [name, dates] of Object.entries(byPerson)) {
+    if (onlySet && !onlySet.has(name)) continue
     const phone = phoneMap.get(name)
     if (!phone) { missing.push(name); continue }
     await textSchedulePublished(phone, name, dates)
