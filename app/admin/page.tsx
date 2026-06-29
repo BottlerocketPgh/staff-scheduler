@@ -138,6 +138,8 @@ function ScheduleTab() {
   const [showSubmissions, setShowSubmissions] = useState(false)
   const [unlockingName, setUnlockingName] = useState<string | null>(null)
   const [noTechDates, setNoTechDates] = useState<Set<string>>(new Set())
+  const [events, setEvents] = useState<Record<string, string>>({})
+  const [opendateConnected, setOpendateConnected] = useState<boolean | null>(null)
   const monthOptions = getMonthOptions()
   const today = new Date().toISOString().split('T')[0]
 
@@ -150,12 +152,19 @@ function ScheduleTab() {
       fetch(`/api/availability/submit?month=${m}`).then((r) => r.json()),
       fetch('/api/staff').then((r) => r.json()),
       fetch(`/api/no-tech?month=${m}`).then((r) => r.json()),
+      fetch(`/api/events?month=${m}`).then((r) => r.json()),
     ])
-      .then(([monthData, subs, staffList, noTechList]) => {
+      .then(([monthData, subs, staffList, noTechList, eventsData]) => {
         setData(monthData)
         setSubmissions(Array.isArray(subs) ? subs : [])
         setAllStaff((staffList as { name: string }[]).map((s) => s.name))
         setNoTechDates(new Set(noTechList as string[]))
+        if (eventsData && typeof eventsData === 'object' && !eventsData.error) {
+          setEvents(eventsData)
+          setOpendateConnected(Object.keys(eventsData).length >= 0)
+        } else {
+          setOpendateConnected(false)
+        }
       })
       .finally(() => setLoading(false))
   }
@@ -232,6 +241,15 @@ function ScheduleTab() {
   const weeks = getCalendarWeeks(month)
   const selected = selectedDate ? data[selectedDate] : null
 
+  // Handle OpenDate OAuth redirect feedback
+  const [opendateMsg, setOpendateMsg] = useState<string | null>(null)
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    if (params.get('opendate') === 'connected') setOpendateMsg('OpenDate connected!')
+    if (params.get('opendate') === 'error') setOpendateMsg(`OpenDate error: ${params.get('reason') ?? 'unknown'}`)
+    if (params.has('opendate')) window.history.replaceState({}, '', '/admin')
+  }, [])
+
   return (
     <div>
       {/* Toolbar */}
@@ -258,6 +276,19 @@ function ScheduleTab() {
               {sendResult.missing.length > 0 && (
                 <span className="text-honey"> Missing email: {sendResult.missing.join(', ')}</span>
               )}
+            </span>
+          )}
+          {opendateConnected === false && (
+            <a
+              href="/api/auth/opendate"
+              className="text-xs text-forest/40 hover:text-forest-dark underline transition-colors"
+            >
+              Connect OpenDate
+            </a>
+          )}
+          {opendateMsg && (
+            <span className={`text-xs ${opendateMsg.startsWith('OpenDate connected') ? 'text-steel' : 'text-red-400'}`}>
+              {opendateMsg}
             </span>
           )}
         </div>
@@ -293,6 +324,7 @@ function ScheduleTab() {
                   const isPast = date < today
                   const isCancelled = day?.confirmStatus === 'cancelled'
                   const isNoTech = noTechDates.has(date)
+                  const eventName = events[date]
                   const dayNum = parseInt(date.split('-')[2])
 
                   return (
@@ -319,6 +351,9 @@ function ScheduleTab() {
                       <span className={`text-xs leading-none ${isPast && !day?.assigned ? 'text-forest/25' : 'text-forest/50'}`}>
                         {dayNum}
                       </span>
+                      {eventName && (
+                        <span className="text-[8px] text-steel/70 leading-none truncate mt-0.5">{eventName}</span>
+                      )}
                       {day?.assigned && (
                         <span className={`text-[10px] font-semibold leading-tight mt-auto truncate ${isCancelled ? 'text-red-400' : isPast ? 'text-forest/40' : 'text-rust'}`}>
                           {day.assigned.split(' ')[0]}
