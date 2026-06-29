@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
 import { COOKIE_NAME, getExpectedToken } from '@/lib/auth'
-import { textTimeOffToAdmin, textSubNeeded } from '@/lib/sms'
+import { textTimeOffToAdmin, textSubAvailable } from '@/lib/sms'
 
 function isAdmin(req: NextRequest) {
   return req.cookies.get(COOKIE_NAME)?.value === getExpectedToken()
@@ -55,7 +55,7 @@ export async function POST(req: NextRequest) {
   // Text admin about the request
   await textTimeOffToAdmin(staff_name, date, note || null)
 
-  // Find other available staff for that date and text them about the sub needed
+  // Find other available staff for that date and send each a personalized sub claim link
   const { data: availRows } = await supabase
     .from('availability')
     .select('staff_name')
@@ -66,11 +66,15 @@ export async function POST(req: NextRequest) {
     const names = availRows.map((r) => r.staff_name)
     const { data: staffRows } = await supabase
       .from('staff')
-      .select('phone')
+      .select('name, phone')
       .in('name', names)
       .eq('active', true)
-    const phones = (staffRows ?? []).map((s) => s.phone).filter(Boolean) as string[]
-    if (phones.length) await textSubNeeded(phones, staff_name, date)
+    for (const s of staffRows ?? []) {
+      if (!s.phone) continue
+      const token = crypto.randomUUID()
+      await supabase.from('sub_claims').insert({ token, staff_name: s.name, absent_staff_name: staff_name, date })
+      await textSubAvailable(s.phone, s.name, staff_name, date, token)
+    }
   }
 
   return NextResponse.json({ ok: true })
