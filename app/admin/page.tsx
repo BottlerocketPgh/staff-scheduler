@@ -138,7 +138,7 @@ function ScheduleTab() {
   const [showSubmissions, setShowSubmissions] = useState(false)
   const [unlockingName, setUnlockingName] = useState<string | null>(null)
   const [noTechDates, setNoTechDates] = useState<Set<string>>(new Set())
-  const [events, setEvents] = useState<Record<string, string>>({})
+  const [events, setEvents] = useState<Record<string, { name: string; url: string }>>({})
   const monthOptions = getMonthOptions()
   const today = new Date().toISOString().split('T')[0]
 
@@ -146,23 +146,30 @@ function ScheduleTab() {
     setSendResult(null)
     setSelectedDate(null)
     setLoading(true)
+    setEvents({})
     Promise.all([
       fetch(`/api/admin/month-view?month=${m}`).then((r) => r.json()),
       fetch(`/api/availability/submit?month=${m}`).then((r) => r.json()),
       fetch('/api/staff').then((r) => r.json()),
       fetch(`/api/no-tech?month=${m}`).then((r) => r.json()),
-      fetch(`/api/events?month=${m}`).then((r) => r.json()),
     ])
-      .then(([monthData, subs, staffList, noTechList, eventsData]) => {
+      .then(([monthData, subs, staffList, noTechList]) => {
         setData(monthData)
         setSubmissions(Array.isArray(subs) ? subs : [])
         setAllStaff((staffList as { name: string }[]).map((s) => s.name))
         setNoTechDates(new Set(noTechList as string[]))
+      })
+      .finally(() => setLoading(false))
+
+    // Load OpenDate events in background — doesn't block calendar render
+    fetch(`/api/events?month=${m}`)
+      .then((r) => r.json())
+      .then((eventsData) => {
         if (eventsData && typeof eventsData === 'object' && !eventsData.error) {
           setEvents(eventsData)
         }
       })
-      .finally(() => setLoading(false))
+      .catch(() => {})
   }
 
   useEffect(() => { loadMonth(month) }, [month])
@@ -312,7 +319,6 @@ function ScheduleTab() {
                   const isPast = date < today
                   const isCancelled = day?.confirmStatus === 'cancelled'
                   const isNoTech = noTechDates.has(date)
-                  const eventName = events[date]
                   const dayNum = parseInt(date.split('-')[2])
 
                   return (
@@ -339,9 +345,6 @@ function ScheduleTab() {
                       <span className={`text-xs leading-none ${isPast && !day?.assigned ? 'text-forest/25' : 'text-forest/50'}`}>
                         {dayNum}
                       </span>
-                      {eventName && (
-                        <span className="text-[8px] text-steel/70 leading-none truncate mt-0.5">{eventName}</span>
-                      )}
                       {day?.assigned && (
                         <span className={`text-[10px] font-semibold leading-tight mt-auto truncate ${isCancelled ? 'text-red-400' : isPast ? 'text-forest/40' : 'text-rust'}`}>
                           {day.assigned.split(' ')[0]}
@@ -437,7 +440,19 @@ function ScheduleTab() {
                 : 'bg-white border-forest/15',
             ].join(' ')}>
               <div className="flex items-start justify-between mb-3">
-                <h2 className="font-semibold text-forest-dark">{fmtDateLong(selectedDate)}</h2>
+                <div>
+                  <h2 className="font-semibold text-forest-dark">{fmtDateLong(selectedDate)}</h2>
+                  {events[selectedDate] && (
+                    <a
+                      href={events[selectedDate].url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-xs text-steel hover:text-steel-dark underline mt-0.5 block"
+                    >
+                      {events[selectedDate].name}
+                    </a>
+                  )}
+                </div>
                 <button
                   onClick={() => setSelectedDate(null)}
                   className="text-forest/40 hover:text-forest/70 text-lg leading-none"

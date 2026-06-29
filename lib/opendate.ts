@@ -64,7 +64,7 @@ export async function getValidToken(): Promise<string | null> {
   return tokens.access_token
 }
 
-export async function fetchEvents(month: string): Promise<Record<string, string>> {
+export async function fetchEvents(month: string): Promise<Record<string, { name: string; url: string }>> {
   const token = await getValidToken()
   if (!token) return {}
 
@@ -88,9 +88,11 @@ export async function fetchEvents(month: string): Promise<Record<string, string>
   if (!res.ok) return {}
 
   const data = await res.json()
-  const events: Record<string, string> = {}
+  const events: Record<string, { name: string; url: string }> = {}
   for (const e of data.collection ?? []) {
-    if (e.start_date && e.name) events[e.start_date] = e.name
+    if (e.start_date && e.name) {
+      events[e.start_date] = { name: e.name, url: `${BASE}/confirms/${e.id}` }
+    }
   }
   return events
 }
