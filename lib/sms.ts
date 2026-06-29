@@ -51,11 +51,15 @@ export async function textTimeOffToAdmin(staffName: string, date: string, note: 
 
 export async function textSubAvailable(phone: string, name: string, absentName: string, date: string, token: string) {
   const url = `${APP_URL}/sub/${token}`
-  await send(phone, `Sub needed at Bottlerocket on ${fmtDate(date)} — ${absentName} can't make it. Can you cover?\nI can cover: ${url}\n(No reply needed if you can't.)`)
+  await send(phone, `Sub needed at Bottlerocket on ${fmtDate(date)} — ${absentName} can't make it. Can you cover? Let us know: ${url}`)
 }
 
 export async function textSubClaimed(adminPhone: string, claimerName: string, absentName: string, date: string) {
-  await send(adminPhone, `${claimerName} can cover ${fmtDate(date)}! They claimed the sub for ${absentName}'s shift. — Flight Deck`)
+  await send(adminPhone, `✓ ${claimerName} can cover ${fmtDate(date)}! (Sub for ${absentName}) — Flight Deck`)
+}
+
+export async function textSubDeclined(adminPhone: string, declinerName: string, absentName: string, date: string) {
+  await send(adminPhone, `✗ ${declinerName} can't cover ${fmtDate(date)}. (Sub for ${absentName}) — Flight Deck`)
 }
 
 export async function textAvailabilitySubmitted(staffName: string, month: string) {

@@ -12,30 +12,33 @@ function fmtDate(dateStr: string) {
 
 export default function SubClaimPage() {
   const { token } = useParams<{ token: string }>()
-  const [state, setState] = useState<'loading' | 'ready' | 'claiming' | 'claimed' | 'already' | 'error'>('loading')
+  const [state, setState] = useState<'loading' | 'ready' | 'submitting' | 'claimed' | 'declined' | 'already' | 'error'>('loading')
   const [info, setInfo] = useState<{ staffName: string; date: string } | null>(null)
 
-  // Pre-fetch claim info to show the date before they tap
   useEffect(() => {
     fetch(`/api/sub?token=${token}`)
       .then((r) => r.json())
       .then((d) => {
         if (d.error) { setState('error'); return }
-        if (d.status === 'claimed') { setState('already'); return }
+        if (d.status !== 'pending') { setState('already'); return }
         setInfo({ staffName: d.staff_name, date: d.date })
         setState('ready')
       })
       .catch(() => setState('error'))
   }, [token])
 
-  async function claim() {
-    setState('claiming')
-    const res = await fetch('/api/sub', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ token }) })
+  async function respond(action: 'claim' | 'decline') {
+    setState('submitting')
+    const res = await fetch('/api/sub', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token, action }),
+    })
     const d = await res.json()
     if (d.already) { setState('already'); return }
     if (!res.ok) { setState('error'); return }
     setInfo({ staffName: d.staffName, date: d.date })
-    setState('claimed')
+    setState(action === 'claim' ? 'claimed' : 'declined')
   }
 
   return (
@@ -54,18 +57,26 @@ export default function SubClaimPage() {
             Can you cover the shift on{' '}
             <span className="font-semibold text-forest-dark">{fmtDate(info.date)}</span>?
           </p>
-          <button
-            onClick={claim}
-            className="bg-rust hover:bg-rust-dark text-cream font-semibold px-8 py-3 rounded-xl transition-colors w-full"
-          >
-            Yes, I can cover this shift
-          </button>
-          <p className="text-forest/30 text-xs mt-4">The admin will be notified right away.</p>
+          <div className="flex flex-col gap-3">
+            <button
+              onClick={() => respond('claim')}
+              className="bg-rust hover:bg-rust-dark text-cream font-semibold px-8 py-3 rounded-xl transition-colors w-full"
+            >
+              Yes, I can cover this shift
+            </button>
+            <button
+              onClick={() => respond('decline')}
+              className="bg-white hover:bg-forest/5 text-forest/60 font-medium px-8 py-3 rounded-xl transition-colors w-full border border-forest/15"
+            >
+              No, I can't make it
+            </button>
+          </div>
+          <p className="text-forest/30 text-xs mt-4">The admin will be notified either way.</p>
         </>
       )}
 
-      {state === 'claiming' && (
-        <p className="text-forest/50">Confirming…</p>
+      {state === 'submitting' && (
+        <p className="text-forest/50">Sending…</p>
       )}
 
       {state === 'claimed' && info && (
@@ -78,10 +89,20 @@ export default function SubClaimPage() {
         </>
       )}
 
+      {state === 'declined' && info && (
+        <>
+          <h1 className="text-xl font-bold mb-3 text-forest-dark">Got it</h1>
+          <p className="text-forest/60">
+            No worries — the admin knows you can't make{' '}
+            <span className="font-semibold text-forest-dark">{fmtDate(info.date)}</span>. Thanks for responding!
+          </p>
+        </>
+      )}
+
       {state === 'already' && (
         <>
-          <h1 className="text-xl font-bold mb-3 text-forest-dark">Already claimed</h1>
-          <p className="text-forest/60">Someone already picked up this shift. Thanks for being willing!</p>
+          <h1 className="text-xl font-bold mb-3 text-forest-dark">Already responded</h1>
+          <p className="text-forest/60">You've already replied to this request.</p>
         </>
       )}
 
