@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
 import { COOKIE_NAME, getExpectedToken } from '@/lib/auth'
+import { textOptIn } from '@/lib/sms'
 
 function isAdmin(req: NextRequest) {
   return req.cookies.get(COOKIE_NAME)?.value === getExpectedToken()
@@ -103,10 +104,10 @@ export async function PATCH(req: NextRequest) {
   }
 
   if (body.action === 'update_phone') {
-    await supabase
-      .from('staff')
-      .update({ phone: body.phone?.trim() || null })
-      .eq('id', body.id)
+    const phone = body.phone?.trim() || null
+    const { data: staffRow } = await supabase.from('staff').select('name').eq('id', body.id).single()
+    await supabase.from('staff').update({ phone }).eq('id', body.id)
+    if (phone && staffRow?.name) await textOptIn(phone, staffRow.name)
     return NextResponse.json({ ok: true })
   }
 
