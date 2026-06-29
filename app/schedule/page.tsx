@@ -143,7 +143,6 @@ export default function SchedulePage() {
                   const isToday = date === today
                   const isPast = date < today
                   const isSelected = selectedDate === date
-                  const hasEvent = (events[date]?.length ?? 0) > 0
                   const dayNum = parseInt(date.split('-')[2])
                   return (
                     <button
@@ -170,12 +169,9 @@ export default function SchedulePage() {
                           N/A
                         </span>
                       ) : assigned ? (
-                        <>
-                          <span className={`text-[10px] font-semibold leading-tight mt-auto truncate ${isPast ? 'text-forest/30' : 'text-rust'}`}>
+                        <span className={`text-[10px] font-semibold leading-tight mt-auto truncate ${isPast ? 'text-forest/30' : 'text-rust'}`}>
                             {assigned.split(' ')[0]}
                           </span>
-                          {hasEvent && <span className="w-1 h-1 rounded-full bg-steel mt-0.5 shrink-0" />}
-                        </>
                       ) : null}
                     </button>
                   )
