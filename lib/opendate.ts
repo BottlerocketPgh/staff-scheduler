@@ -79,9 +79,13 @@ export async function fetchEvents(start: string, end: string): Promise<Record<st
   })
   if (!res.ok) return {}
 
+  const VENUE_IDS = new Set([2966810, 3133457]) // Bottlerocket Social Hall, Little Giant
+
   const data = await res.json()
   const events: Record<string, { name: string; url: string }[]> = {}
   for (const e of data.collection ?? []) {
+    if (e.calendar_classification === 'canceled') continue
+    if (!VENUE_IDS.has(e.venue?.id)) continue
     const dateKey = e.start_date ?? (e.start_time ? String(e.start_time).slice(0, 10) : null)
     if (dateKey && e.name) {
       const entry = {
