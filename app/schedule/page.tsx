@@ -37,7 +37,7 @@ function fmtDateLong(dateStr: string) {
   })
 }
 
-const CACHE_KEY = 'od_events_v4'
+const CACHE_KEY = 'od_events_v5'
 const CACHE_TTL = 4 * 60 * 60 * 1000
 
 function readEventsCache(m: string): Record<string, { name: string; url: string }[]> | null {

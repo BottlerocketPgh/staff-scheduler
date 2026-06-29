@@ -90,7 +90,7 @@ export async function fetchEvents(start: string, end: string): Promise<Record<st
     if (dateKey && e.name) {
       const entry = {
         name: e.name,
-        url: e.public_ticketing_url ?? `${BASE}/teams/${e.team_id}/confirms/${e.id}`,
+        url: `${BASE}/teams/${e.team_id}/confirms/${e.id}`,
       }
       if (!events[dateKey]) events[dateKey] = []
       events[dateKey].push(entry)
