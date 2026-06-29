@@ -34,12 +34,12 @@ async function send(to: string, body: string): Promise<boolean> {
 export async function textShiftReminder(phone: string, name: string, date: string, token: string) {
   const yesUrl = `${APP_URL}/confirm/${token}/yes`
   const noUrl  = `${APP_URL}/confirm/${token}/no`
-  await send(phone, `Hey ${name} — you're on tech at Bottlerocket ${fmtDate(date)}. Still good?\nYES: ${yesUrl}\nCan't make it: ${noUrl}`)
+  await send(phone, `Hey ${name} — you're on tech at Bottlerocket ${fmtDate(date)}. Still good?\nYES: ${yesUrl}\nCan't make it: ${noUrl}\nReply STOP to opt out.`)
 }
 
 export async function textSchedulePublished(phone: string, name: string, dates: string[]) {
   const list = [...dates].sort().map(fmtDate).join(', ')
-  await send(phone, `Hey ${name}, your Bottlerocket schedule is confirmed! You're on for: ${list}. You'll get a reminder 2 days before each show. — Flight Deck`)
+  await send(phone, `Hey ${name}, your Bottlerocket schedule is confirmed! You're on for: ${list}. You'll get a reminder 2 days before each show. — Flight Deck. Reply STOP to opt out.`)
 }
 
 export async function textTimeOffToAdmin(staffName: string, date: string, note: string | null) {
@@ -51,7 +51,7 @@ export async function textTimeOffToAdmin(staffName: string, date: string, note: 
 
 export async function textSubAvailable(phone: string, name: string, absentName: string, date: string, token: string) {
   const url = `${APP_URL}/sub/${token}`
-  await send(phone, `Sub needed at Bottlerocket on ${fmtDate(date)} — ${absentName} can't make it. Can you cover? Let us know: ${url}`)
+  await send(phone, `Sub needed at Bottlerocket on ${fmtDate(date)} — ${absentName} can't make it. Can you cover? Let us know: ${url} Reply STOP to opt out.`)
 }
 
 export async function textSubClaimed(adminPhone: string, claimerName: string, absentName: string, date: string) {
@@ -69,5 +69,5 @@ export async function textAvailabilitySubmitted(staffName: string, month: string
 }
 
 export async function textAvailabilityReminder(phone: string, name: string, month: string) {
-  await send(phone, `Hey ${name} — reminder to submit your availability for ${fmtMonth(month)} at ${APP_URL}`)
+  await send(phone, `Hey ${name} — reminder to submit your availability for ${fmtMonth(month)} at ${APP_URL} Reply STOP to opt out.`)
 }
