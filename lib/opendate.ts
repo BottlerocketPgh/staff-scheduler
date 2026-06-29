@@ -91,7 +91,8 @@ export async function fetchEvents(month: string): Promise<Record<string, { name:
   const events: Record<string, { name: string; url: string }> = {}
   for (const e of data.collection ?? []) {
     if (e.start_date && e.name) {
-      events[e.start_date] = { name: e.name, url: `${BASE}/confirms/${e.id}` }
+      const dateKey = String(e.start_date).slice(0, 10)
+      events[dateKey] = { name: e.name, url: `${BASE}/confirms/${e.id}` }
     }
   }
   return events
