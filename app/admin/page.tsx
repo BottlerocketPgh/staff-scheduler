@@ -139,7 +139,6 @@ function ScheduleTab() {
   const [unlockingName, setUnlockingName] = useState<string | null>(null)
   const [noTechDates, setNoTechDates] = useState<Set<string>>(new Set())
   const [events, setEvents] = useState<Record<string, string>>({})
-  const [opendateConnected, setOpendateConnected] = useState<boolean | null>(null)
   const monthOptions = getMonthOptions()
   const today = new Date().toISOString().split('T')[0]
 
@@ -161,9 +160,6 @@ function ScheduleTab() {
         setNoTechDates(new Set(noTechList as string[]))
         if (eventsData && typeof eventsData === 'object' && !eventsData.error) {
           setEvents(eventsData)
-          setOpendateConnected(Object.keys(eventsData).length >= 0)
-        } else {
-          setOpendateConnected(false)
         }
       })
       .finally(() => setLoading(false))
@@ -277,14 +273,6 @@ function ScheduleTab() {
                 <span className="text-honey"> Missing email: {sendResult.missing.join(', ')}</span>
               )}
             </span>
-          )}
-          {opendateConnected === false && (
-            <a
-              href="/api/auth/opendate"
-              className="text-xs text-forest/40 hover:text-forest-dark underline transition-colors"
-            >
-              Connect OpenDate
-            </a>
           )}
           {opendateMsg && (
             <span className={`text-xs ${opendateMsg.startsWith('OpenDate connected') ? 'text-steel' : 'text-red-400'}`}>
