@@ -55,6 +55,7 @@ export default function MySchedulePage() {
   const [month, setMonth] = useState(() => new Date().toISOString().slice(0, 7))
   const [assignments, setAssignments] = useState<Record<string, string>>({})
   const [timeOffRequests, setTimeOffRequests] = useState<TimeOffRequest[]>([])
+  const [events, setEvents] = useState<Record<string, { name: string; url: string }[]>>({})
   const [loading, setLoading] = useState(false)
   const [requestingDate, setRequestingDate] = useState<string | null>(null)
   const [noteInput, setNoteInput] = useState('')
@@ -62,6 +63,25 @@ export default function MySchedulePage() {
   const debounceRef = useRef<ReturnType<typeof setTimeout>>()
   const today = new Date().toISOString().split('T')[0]
   const monthOptions = getMonthOptions()
+
+  const CACHE_KEY = 'od_events_v4'
+  const CACHE_TTL = 4 * 60 * 60 * 1000
+
+  function readEventsCache(m: string): Record<string, { name: string; url: string }[]> | null {
+    try {
+      const raw = localStorage.getItem(`${CACHE_KEY}_${m}`)
+      if (!raw) return null
+      const { data, ts } = JSON.parse(raw)
+      if (Date.now() - ts > CACHE_TTL) return null
+      return data
+    } catch { return null }
+  }
+
+  function writeEventsCache(m: string, data: Record<string, { name: string; url: string }[]>) {
+    try {
+      localStorage.setItem(`${CACHE_KEY}_${m}`, JSON.stringify({ data, ts: Date.now() }))
+    } catch {}
+  }
 
   useEffect(() => {
     if (!nameInput.trim() || confirmedName) { setSuggestions([]); return }
@@ -75,6 +95,22 @@ export default function MySchedulePage() {
   useEffect(() => {
     if (!confirmedName) return
     setLoading(true)
+
+    const cached = readEventsCache(month)
+    if (cached) setEvents(cached)
+    else {
+      setEvents({})
+      fetch(`/api/events?month=${month}`)
+        .then(r => r.json())
+        .then(data => {
+          if (data && typeof data === 'object' && !data.error) {
+            setEvents(data)
+            writeEventsCache(month, data)
+          }
+        })
+        .catch(() => {})
+    }
+
     Promise.all([
       fetch(`/api/assignments?month=${month}`).then(r => r.json()),
       fetch(`/api/time-off?name=${encodeURIComponent(confirmedName)}&month=${month}`).then(r => r.json()),
@@ -264,6 +300,12 @@ export default function MySchedulePage() {
 
               {requestingDate && (
                 <div className="bg-white border border-forest/15 rounded-xl p-4">
+                  {(events[requestingDate] ?? []).map(ev => (
+                    <a key={ev.url} href={ev.url} target="_blank" rel="noopener noreferrer"
+                      className="text-xs text-steel hover:text-steel-dark underline block mb-2">
+                      {ev.name}
+                    </a>
+                  ))}
                   {timeOffMap.get(requestingDate) ? (
                     <>
                       <p className="text-sm font-medium text-forest-dark mb-1">
@@ -313,16 +355,25 @@ export default function MySchedulePage() {
                 <div className="mt-2 space-y-1">
                   <p className="text-xs text-forest/40 uppercase tracking-wider mb-2">Add to Google Calendar</p>
                   {myDates.filter(d => d >= today).sort().map(date => (
-                    <a
-                      key={date}
-                      href={gcalUrl(date)}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center justify-between bg-white border border-forest/10 rounded-lg px-3 py-2 hover:bg-forest/5 transition-colors"
-                    >
-                      <span className="text-sm text-forest/70">{fmtDateLong(date)}</span>
-                      <span className="text-xs text-steel ml-3 shrink-0">+ GCal</span>
-                    </a>
+                    <div key={date} className="bg-white border border-forest/10 rounded-lg px-3 py-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-forest/70">{fmtDateLong(date)}</span>
+                        <a
+                          href={gcalUrl(date)}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-xs text-steel ml-3 shrink-0 hover:text-steel-dark"
+                        >
+                          + GCal
+                        </a>
+                      </div>
+                      {(events[date] ?? []).map(ev => (
+                        <a key={ev.url} href={ev.url} target="_blank" rel="noopener noreferrer"
+                          className="text-xs text-steel hover:text-steel-dark underline block mt-0.5">
+                          {ev.name}
+                        </a>
+                      ))}
+                    </div>
                   ))}
                 </div>
               )}
