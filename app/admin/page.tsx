@@ -289,12 +289,12 @@ function ScheduleTab() {
         <div className="flex items-center gap-3 flex-wrap">
           <button
             onClick={sendSchedule}
-            disabled={sending}
+            disabled={sending || !!sendResult}
             className="bg-rust hover:bg-rust-dark text-cream text-sm px-4 py-2 rounded-lg font-medium disabled:opacity-50 transition-colors"
           >
-            {sending ? 'Sending...' : `Send Confirmed Schedule — ${monthLabel(month)}`}
+            {sending ? 'Sending...' : sendResult ? `Schedule Confirmed — ${monthLabel(month)}` : `Send Confirmed Schedule — ${monthLabel(month)}`}
           </button>
-          {allStaff.length > 0 && (
+          {!sendResult && allStaff.length > 0 && (
             <button
               onClick={() => setShowSubmissions(true)}
               className="text-sm text-forest/50 hover:text-forest-dark underline transition-colors"
