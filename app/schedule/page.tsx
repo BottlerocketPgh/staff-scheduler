@@ -33,20 +33,22 @@ function getCalendarWeeks(month: string): (string | null)[][] {
 export default function SchedulePage() {
   const [month, setMonth] = useState(() => new Date().toISOString().slice(0, 7))
   const [assignments, setAssignments] = useState<Record<string, string>>({})
+  const [noTechDates, setNoTechDates] = useState<Set<string>>(new Set())
   const [loading, setLoading] = useState(false)
   const today = new Date().toISOString().split('T')[0]
   const monthOptions = getMonthOptions()
 
   useEffect(() => {
     setLoading(true)
-    fetch(`/api/assignments?month=${month}`)
-      .then((r) => r.json())
-      .then((rows: { date: string; staff_name: string }[]) => {
-        const map: Record<string, string> = {}
-        for (const row of rows) map[row.date] = row.staff_name
-        setAssignments(map)
-      })
-      .finally(() => setLoading(false))
+    Promise.all([
+      fetch(`/api/assignments?month=${month}`).then((r) => r.json()),
+      fetch(`/api/no-tech?month=${month}`).then((r) => r.json()),
+    ]).then(([rows, noTech]: [{ date: string; staff_name: string }[], string[]]) => {
+      const map: Record<string, string> = {}
+      for (const row of rows) map[row.date] = row.staff_name
+      setAssignments(map)
+      setNoTechDates(new Set(noTech))
+    }).finally(() => setLoading(false))
   }, [month])
 
   const weeks = getCalendarWeeks(month)
@@ -92,6 +94,7 @@ export default function SchedulePage() {
                 {week.map((date, di) => {
                   if (!date) return <div key={`e-${wi}-${di}`} className="aspect-square" />
                   const assigned = assignments[date]
+                  const isNoTech = noTechDates.has(date)
                   const isToday = date === today
                   const isPast = date < today
                   const dayNum = parseInt(date.split('-')[2])
@@ -104,19 +107,23 @@ export default function SchedulePage() {
                           ? 'bg-rust/20 border border-rust/40'
                           : isPast
                             ? 'bg-white'
-                            : assigned
+                            : assigned || isNoTech
                               ? 'bg-white border border-honey/20'
                               : 'bg-white',
                       ].join(' ')}
                     >
-                      <span className={`text-xs leading-none ${isPast && !assigned ? 'text-forest/25' : 'text-forest/50'}`}>
+                      <span className={`text-xs leading-none ${isPast && !assigned && !isNoTech ? 'text-forest/25' : 'text-forest/50'}`}>
                         {dayNum}
                       </span>
-                      {assigned && (
+                      {isNoTech ? (
+                        <span className={`text-[10px] font-semibold leading-tight mt-auto truncate ${isPast ? 'text-forest/30' : 'text-forest/40'}`}>
+                          N/A
+                        </span>
+                      ) : assigned ? (
                         <span className={`text-[10px] font-semibold leading-tight mt-auto truncate ${isPast ? 'text-forest/30' : 'text-rust'}`}>
                           {assigned.split(' ')[0]}
                         </span>
-                      )}
+                      ) : null}
                     </div>
                   )
                 })}
