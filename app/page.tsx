@@ -26,6 +26,14 @@ export default function Home() {
           Admin login
         </Link>
       </div>
+      <div className="mt-6 text-center flex justify-center gap-4">
+        <Link href="/privacy" className="text-xs text-forest/25 hover:text-forest/50 transition-colors">
+          Privacy Policy
+        </Link>
+        <Link href="/sms-terms" className="text-xs text-forest/25 hover:text-forest/50 transition-colors">
+          SMS Terms
+        </Link>
+      </div>
     </main>
   )
 }
