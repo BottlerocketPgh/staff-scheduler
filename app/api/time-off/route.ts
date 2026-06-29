@@ -16,11 +16,8 @@ export async function GET(req: NextRequest) {
 
   if (status) {
     if (!isAdmin(req)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    const { data, error } = await supabase
-      .from('time_off_requests')
-      .select('*')
-      .eq('status', status)
-      .order('date')
+    const query = supabase.from('time_off_requests').select('*').order('date')
+    const { data, error } = status === 'all' ? await query : await query.eq('status', status)
     if (error) return NextResponse.json({ error: error.message }, { status: 500 })
     return NextResponse.json(data)
   }
