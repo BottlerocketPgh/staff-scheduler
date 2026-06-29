@@ -86,8 +86,9 @@ export async function fetchEvents(start: string, end: string): Promise<Record<st
   const data = await res.json()
   const events: Record<string, { name: string; url: string }> = {}
   for (const e of data.collection ?? []) {
-    if (e.start_date && e.name) {
-      const dateKey = String(e.start_date).slice(0, 10)
+    const rawDate = e.start_date ?? e.starts_at
+    if (rawDate && e.name) {
+      const dateKey = String(rawDate).slice(0, 10)
       const teamId = e.team_id ?? process.env.OPENDATE_TEAM_ID
       const url = teamId
         ? `${BASE}/teams/${teamId}/confirms/${e.id}`
