@@ -5,7 +5,10 @@ export async function GET(req: NextRequest) {
   const date = req.nextUrl.searchParams.get('date')
   const month = req.nextUrl.searchParams.get('month')
   if (date) {
-    const events = await fetchEvents(date, date)
+    const next = new Date(date + 'T00:00:00')
+    next.setDate(next.getDate() + 1)
+    const end = next.toISOString().split('T')[0]
+    const events = await fetchEvents(date, end)
     return NextResponse.json(events)
   }
   if (month) {
