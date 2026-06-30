@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
-import { textSubClaimed, textSubDeclined } from '@/lib/sms'
+import { textSubClaimed, textSubDeclined, textSubFilled } from '@/lib/sms'
 import { COOKIE_NAME, getExpectedToken } from '@/lib/auth'
 
 function isAdmin(req: NextRequest) {
@@ -46,6 +46,14 @@ export async function POST(req: NextRequest) {
   await supabase.from('sub_claims').update({ status: newStatus }).eq('token', token)
 
   if (action === 'claim') {
+    const { data: toExpire } = await supabase
+      .from('sub_claims')
+      .select('staff_name')
+      .eq('date', claim.date)
+      .eq('absent_staff_name', claim.absent_staff_name)
+      .eq('status', 'pending')
+      .neq('token', token)
+
     await Promise.all([
       supabase
         .from('sub_claims')
@@ -60,6 +68,18 @@ export async function POST(req: NextRequest) {
         .eq('date', claim.date)
         .eq('staff_name', claim.absent_staff_name),
     ])
+
+    if (toExpire?.length) {
+      const names = toExpire.map((c) => c.staff_name)
+      const { data: staffRows } = await supabase
+        .from('staff')
+        .select('name, phone')
+        .in('name', names)
+        .eq('active', true)
+      for (const s of staffRows ?? []) {
+        if (s.phone) await textSubFilled(s.phone, s.name, claim.date)
+      }
+    }
   }
 
   const adminPhone = process.env.ADMIN_PHONE

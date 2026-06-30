@@ -60,6 +60,10 @@ export async function textSubAvailable(phone: string, name: string, absentName: 
   await send(phone, `Sub needed at Bottlerocket on ${fmtDate(date)} — ${absentName} can't make it. Can you cover? Reply YES or NO. ${url} Reply STOP to opt out.`)
 }
 
+export async function textSubFilled(phone: string, name: string, date: string) {
+  await send(phone, `Hey ${name} — the sub spot for ${fmtDate(date)} has been filled. No action needed. Reply STOP to opt out.`)
+}
+
 export async function textSubClaimed(adminPhone: string, claimerName: string, absentName: string, date: string) {
   await send(adminPhone, `✓ ${claimerName} can cover ${fmtDate(date)}! (Sub for ${absentName}) — Flight Deck`)
 }
