@@ -45,6 +45,16 @@ export async function POST(req: NextRequest) {
   const newStatus = action === 'claim' ? 'claimed' : 'declined'
   await supabase.from('sub_claims').update({ status: newStatus }).eq('token', token)
 
+  if (action === 'claim') {
+    await supabase
+      .from('sub_claims')
+      .update({ status: 'expired' })
+      .eq('date', claim.date)
+      .eq('absent_staff_name', claim.absent_staff_name)
+      .eq('status', 'pending')
+      .neq('token', token)
+  }
+
   const adminPhone = process.env.ADMIN_PHONE
   if (adminPhone) {
     if (action === 'claim') {
