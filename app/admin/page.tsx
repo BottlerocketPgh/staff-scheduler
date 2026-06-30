@@ -13,6 +13,7 @@ type StaffMember = {
   priority_order: number
   is_new: boolean
   active: boolean
+  sms_opted_in: boolean
 }
 
 type DayData = {
@@ -610,6 +611,7 @@ function StaffTab() {
   const [editingName, setEditingName] = useState('')
   const [addName, setAddName] = useState('')
   const [adding, setAdding] = useState(false)
+  const [sendingOptInId, setSendingOptInId] = useState<string | null>(null)
 
   useEffect(() => {
     setLoading(true)
@@ -680,6 +682,18 @@ function StaffTab() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ action: 'update_phone', id, phone }),
     })
+    if (phone) setStaff((prev) => prev.map((s) => s.id === id ? { ...s, phone, sms_opted_in: true } : s))
+  }
+
+  async function sendOptIn(id: string) {
+    setSendingOptInId(id)
+    await fetch('/api/staff', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'send_optin', id }),
+    })
+    setStaff((prev) => prev.map((s) => s.id === id ? { ...s, sms_opted_in: true } : s))
+    setSendingOptInId(null)
   }
 
   async function saveName(id: string) {
@@ -738,7 +752,7 @@ function StaffTab() {
                   {s.name}
                 </button>
               )}
-              <div className="flex gap-2 mt-1 flex-wrap">
+              <div className="flex gap-2 mt-1 flex-wrap items-center">
                 <input
                   type="email"
                   defaultValue={s.email ?? ''}
@@ -753,6 +767,17 @@ function StaffTab() {
                   placeholder="4121234567"
                   className="text-xs bg-white border border-forest/20 rounded px-2 py-1 text-forest/70 w-full max-w-[140px] outline-none focus:ring-1 focus:ring-rust placeholder-forest/30"
                 />
+                {s.phone && (
+                  s.sms_opted_in
+                    ? <span className="text-[10px] font-medium text-steel px-1.5 py-0.5 rounded bg-steel/10">SMS ✓</span>
+                    : <button
+                        onClick={() => sendOptIn(s.id)}
+                        disabled={sendingOptInId === s.id}
+                        className="text-[10px] font-medium text-honey-dark px-1.5 py-0.5 rounded bg-honey/20 hover:bg-honey/30 disabled:opacity-50 transition-colors"
+                      >
+                        {sendingOptInId === s.id ? 'Sending...' : 'Send opt-in'}
+                      </button>
+                )}
               </div>
             </div>
             <div className="flex items-center gap-2 shrink-0">

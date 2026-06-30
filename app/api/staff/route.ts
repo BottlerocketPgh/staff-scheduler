@@ -106,8 +106,20 @@ export async function PATCH(req: NextRequest) {
   if (body.action === 'update_phone') {
     const phone = body.phone?.trim() || null
     const { data: staffRow } = await supabase.from('staff').select('name').eq('id', body.id).single()
-    await supabase.from('staff').update({ phone }).eq('id', body.id)
-    if (phone && staffRow?.name) await textOptIn(phone, staffRow.name)
+    await supabase.from('staff').update({ phone, sms_opted_in: false }).eq('id', body.id)
+    if (phone && staffRow?.name) {
+      await textOptIn(phone, staffRow.name)
+      await supabase.from('staff').update({ sms_opted_in: true }).eq('id', body.id)
+    }
+    return NextResponse.json({ ok: true })
+  }
+
+  if (body.action === 'send_optin') {
+    const { data: staffRow } = await supabase.from('staff').select('name, phone').eq('id', body.id).single()
+    if (staffRow?.phone) {
+      await textOptIn(staffRow.phone, staffRow.name)
+      await supabase.from('staff').update({ sms_opted_in: true }).eq('id', body.id)
+    }
     return NextResponse.json({ ok: true })
   }
 
