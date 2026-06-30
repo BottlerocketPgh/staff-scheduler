@@ -13,7 +13,7 @@ type StaffMember = {
   priority_order: number
   is_new: boolean
   active: boolean
-  sms_opted_in: boolean
+  sms_opt_in_status: 'pending' | 'accepted' | null
 }
 
 type DayData = {
@@ -682,7 +682,7 @@ function StaffTab() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ action: 'update_phone', id, phone }),
     })
-    if (phone) setStaff((prev) => prev.map((s) => s.id === id ? { ...s, phone, sms_opted_in: true } : s))
+    if (phone) setStaff((prev) => prev.map((s) => s.id === id ? { ...s, phone, sms_opt_in_status: 'pending' } : s))
   }
 
   async function sendOptIn(id: string) {
@@ -692,8 +692,17 @@ function StaffTab() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ action: 'send_optin', id }),
     })
-    setStaff((prev) => prev.map((s) => s.id === id ? { ...s, sms_opted_in: true } : s))
+    setStaff((prev) => prev.map((s) => s.id === id ? { ...s, sms_opt_in_status: 'pending' } : s))
     setSendingOptInId(null)
+  }
+
+  async function toggleOptIn(id: string, status: 'accepted' | null) {
+    await fetch('/api/staff', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'set_optin_status', id, status }),
+    })
+    setStaff((prev) => prev.map((s) => s.id === id ? { ...s, sms_opt_in_status: status } : s))
   }
 
   async function saveName(id: string) {
@@ -768,15 +777,25 @@ function StaffTab() {
                   className="text-xs bg-white border border-forest/20 rounded px-2 py-1 text-forest/70 w-full max-w-[140px] outline-none focus:ring-1 focus:ring-rust placeholder-forest/30"
                 />
                 {s.phone && (
-                  s.sms_opted_in
-                    ? <span className="text-[10px] font-medium text-steel px-1.5 py-0.5 rounded bg-steel/10">SMS ✓</span>
-                    : <button
-                        onClick={() => sendOptIn(s.id)}
-                        disabled={sendingOptInId === s.id}
-                        className="text-[10px] font-medium text-honey-dark px-1.5 py-0.5 rounded bg-honey/20 hover:bg-honey/30 disabled:opacity-50 transition-colors"
-                      >
-                        {sendingOptInId === s.id ? 'Sending...' : 'Send opt-in'}
-                      </button>
+                  s.sms_opt_in_status === 'accepted'
+                    ? <button
+                        onClick={() => toggleOptIn(s.id, null)}
+                        className="text-[10px] font-medium text-steel px-1.5 py-0.5 rounded bg-steel/10 hover:bg-red-100 hover:text-red-400 transition-colors"
+                        title="Click to clear opt-in status"
+                      >SMS ✓</button>
+                    : s.sms_opt_in_status === 'pending'
+                      ? <button
+                          onClick={() => toggleOptIn(s.id, 'accepted')}
+                          className="text-[10px] font-medium text-honey-dark px-1.5 py-0.5 rounded bg-honey/20 hover:bg-honey/30 transition-colors"
+                          title="Click to mark as accepted"
+                        >Pending</button>
+                      : <button
+                          onClick={() => sendOptIn(s.id)}
+                          disabled={sendingOptInId === s.id}
+                          className="text-[10px] font-medium text-forest/40 px-1.5 py-0.5 rounded bg-forest/8 hover:bg-forest/15 disabled:opacity-50 transition-colors"
+                        >
+                          {sendingOptInId === s.id ? 'Sending...' : 'Send opt-in'}
+                        </button>
                 )}
               </div>
             </div>

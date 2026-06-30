@@ -106,10 +106,10 @@ export async function PATCH(req: NextRequest) {
   if (body.action === 'update_phone') {
     const phone = body.phone?.trim() || null
     const { data: staffRow } = await supabase.from('staff').select('name').eq('id', body.id).single()
-    await supabase.from('staff').update({ phone, sms_opted_in: false }).eq('id', body.id)
+    await supabase.from('staff').update({ phone, sms_opt_in_status: null }).eq('id', body.id)
     if (phone && staffRow?.name) {
       await textOptIn(phone, staffRow.name)
-      await supabase.from('staff').update({ sms_opted_in: true }).eq('id', body.id)
+      await supabase.from('staff').update({ sms_opt_in_status: 'pending' }).eq('id', body.id)
     }
     return NextResponse.json({ ok: true })
   }
@@ -118,8 +118,13 @@ export async function PATCH(req: NextRequest) {
     const { data: staffRow } = await supabase.from('staff').select('name, phone').eq('id', body.id).single()
     if (staffRow?.phone) {
       await textOptIn(staffRow.phone, staffRow.name)
-      await supabase.from('staff').update({ sms_opted_in: true }).eq('id', body.id)
+      await supabase.from('staff').update({ sms_opt_in_status: 'pending' }).eq('id', body.id)
     }
+    return NextResponse.json({ ok: true })
+  }
+
+  if (body.action === 'set_optin_status') {
+    await supabase.from('staff').update({ sms_opt_in_status: body.status ?? null }).eq('id', body.id)
     return NextResponse.json({ ok: true })
   }
 

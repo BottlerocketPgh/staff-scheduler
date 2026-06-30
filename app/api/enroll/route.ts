@@ -31,7 +31,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Name not found' }, { status: 404 })
   }
 
-  await supabase.from('staff').update({ phone: normalized, sms_opted_in: true }).eq('id', staff.id)
+  await supabase.from('staff').update({ phone: normalized, sms_opt_in_status: 'accepted' }).eq('id', staff.id)
   await textOptIn(normalized, staff.name)
 
   return NextResponse.json({ ok: true })
