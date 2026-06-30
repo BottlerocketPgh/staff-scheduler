@@ -164,8 +164,19 @@ function ScheduleTab() {
     } catch {}
   }
 
+  function readConfirmedCache(m: string): { sent: number; missing: string[] } | null {
+    try {
+      const raw = localStorage.getItem(`confirmed_${m}`)
+      return raw ? JSON.parse(raw) : null
+    } catch { return null }
+  }
+
+  function writeConfirmedCache(m: string, result: { sent: number; missing: string[] }) {
+    try { localStorage.setItem(`confirmed_${m}`, JSON.stringify(result)) } catch {}
+  }
+
   function loadMonth(m: string) {
-    setSendResult(null)
+    setSendResult(readConfirmedCache(m))
     setSelectedDate(null)
     setLoading(true)
     setConfirmedAssignments(null)
@@ -228,7 +239,9 @@ function ScheduleTab() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ month }),
     })
-    setSendResult(await res.json())
+    const result = await res.json()
+    setSendResult(result)
+    writeConfirmedCache(month, result)
     setSending(false)
     setConfirmedAssignments(snapshotAssignments())
     // Auto-unlock all submissions for this month after publishing
