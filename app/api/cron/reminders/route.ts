@@ -40,7 +40,7 @@ export async function GET(req: NextRequest) {
         sent_at: new Date().toISOString(),
         responded_at: null,
       },
-      { onConflict: 'date' }
+      { onConflict: 'date,staff_name' }
     )
 
     await textShiftReminder(staff.phone, row.staff_name, row.date, token)
