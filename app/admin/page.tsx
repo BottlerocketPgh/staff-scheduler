@@ -13,7 +13,7 @@ type StaffMember = {
   priority_order: number
   is_new: boolean
   active: boolean
-  sms_opt_in_status: 'pending' | 'accepted' | null
+  sms_opt_in_status: 'pending' | 'accepted' | 'opted_out' | null
 }
 
 type DayData = {
@@ -696,7 +696,7 @@ function StaffTab() {
     setSendingOptInId(null)
   }
 
-  async function toggleOptIn(id: string, status: 'accepted' | null) {
+  async function toggleOptIn(id: string, status: 'accepted' | 'opted_out' | null) {
     await fetch('/api/staff', {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
@@ -789,13 +789,19 @@ function StaffTab() {
                           className="text-[10px] font-medium text-honey-dark px-1.5 py-0.5 rounded bg-honey/20 hover:bg-honey/30 transition-colors"
                           title="Click to mark as accepted"
                         >Pending</button>
-                      : <button
-                          onClick={() => sendOptIn(s.id)}
-                          disabled={sendingOptInId === s.id}
-                          className="text-[10px] font-medium text-forest/40 px-1.5 py-0.5 rounded bg-forest/8 hover:bg-forest/15 disabled:opacity-50 transition-colors"
-                        >
-                          {sendingOptInId === s.id ? 'Sending...' : 'Send opt-in'}
-                        </button>
+                      : s.sms_opt_in_status === 'opted_out'
+                        ? <button
+                            onClick={() => toggleOptIn(s.id, null)}
+                            className="text-[10px] font-medium text-red-400 px-1.5 py-0.5 rounded bg-red-100 hover:bg-red-200 transition-colors"
+                            title="Click to clear opted-out status"
+                          >Opted out</button>
+                        : <button
+                            onClick={() => sendOptIn(s.id)}
+                            disabled={sendingOptInId === s.id}
+                            className="text-[10px] font-medium text-forest/40 px-1.5 py-0.5 rounded bg-forest/8 hover:bg-forest/15 disabled:opacity-50 transition-colors"
+                          >
+                            {sendingOptInId === s.id ? 'Sending...' : 'Send opt-in'}
+                          </button>
                 )}
               </div>
             </div>
