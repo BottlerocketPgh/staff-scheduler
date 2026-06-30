@@ -7,6 +7,13 @@ function isAdmin(req: NextRequest) {
   return req.cookies.get(COOKIE_NAME)?.value === getExpectedToken()
 }
 
+function normalizePhone(raw: string): string | null {
+  const digits = raw.replace(/\D/g, '')
+  if (digits.length === 10) return `+1${digits}`
+  if (digits.length === 11 && digits.startsWith('1')) return `+${digits}`
+  return null
+}
+
 // GET /api/staff?q=search  →  autocomplete (name list)
 // GET /api/staff            →  full list with priority (admin only)
 export async function GET(req: NextRequest) {
@@ -104,7 +111,7 @@ export async function PATCH(req: NextRequest) {
   }
 
   if (body.action === 'update_phone') {
-    const phone = body.phone?.trim() || null
+    const phone = body.phone?.trim() ? normalizePhone(body.phone.trim()) : null
     const { data: staffRow } = await supabase.from('staff').select('name').eq('id', body.id).single()
     await supabase.from('staff').update({ phone, sms_opt_in_status: null }).eq('id', body.id)
     if (phone && staffRow?.name) {
