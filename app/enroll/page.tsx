@@ -64,7 +64,10 @@ export default function EnrollPage() {
 
       <div className="space-y-4 text-sm text-forest/70 mb-8 leading-relaxed">
         <p>
-          Flight Deck is how we manage the tech schedule at Bottlerocket. Once you're set up, you'll get a text when your schedule is ready each month, a reminder the day before each show, and the ability to request time off or pick up subs.
+          Flight Deck is an in-house software allowing us to manage the tech schedule at Bottlerocket. Start by signing up and submitting your availability for the month. Availabilities are due by the 18th of the month.
+        </p>
+        <p>
+          You'll also get a text when your schedule is ready each month, a reminder text the day before each night you work, the ability to request time off, and pick up shifts. Flight Deck is always accessible via staff.bottlerocketpgh.com
         </p>
         <p>
           Enter your name and phone number below to get started. You'll receive a confirmation text — reply <strong>YES</strong> to activate.
