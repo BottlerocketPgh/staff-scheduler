@@ -32,7 +32,7 @@ async function send(to: string, body: string): Promise<boolean> {
 }
 
 export async function textOptIn(phone: string, name: string) {
-  await send(phone, `Bottlerocket Social Hall: Hi ${name}, you've been enrolled to receive shift scheduling notifications from Flight Deck. Msg freq varies. Msg & data rates may apply. Reply STOP to opt out, HELP for help. Terms: ${APP_URL}/sms-terms Privacy: ${APP_URL}/privacy`)
+  await send(phone, `Bottlerocket Social Hall: Hi ${name}, you've been added to Flight Deck, our shift scheduling system. You'll receive shift reminders and schedule updates by text. Reply YES to confirm, or STOP to opt out. Msg & data rates may apply. Terms: ${APP_URL}/sms-terms`)
 }
 
 export async function textShiftReminder(phone: string, name: string, date: string, token: string) {
