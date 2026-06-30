@@ -95,6 +95,4 @@ export async function POST(req: NextRequest) {
 
     return twiml("No pending requests found.")
   }
-
-  return twiml()
 }

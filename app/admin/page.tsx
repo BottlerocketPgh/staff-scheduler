@@ -125,6 +125,9 @@ function PasswordGate({ onAuth }: { onAuth: () => void }) {
 
 // ── Schedule tab ───────────────────────────────────────────────────────────────
 
+const CACHE_KEY = 'od_events_v5'
+const CACHE_TTL = 4 * 60 * 60 * 1000
+
 function ScheduleTab() {
   const [month, setMonth] = useState(() => new Date().toISOString().slice(0, 7))
   const [data, setData] = useState<MonthData>({})
@@ -144,9 +147,6 @@ function ScheduleTab() {
   const [eventsLoading, setEventsLoading] = useState(false)
   const monthOptions = getMonthOptions()
   const today = new Date().toISOString().split('T')[0]
-
-  const CACHE_KEY = 'od_events_v5'
-  const CACHE_TTL = 4 * 60 * 60 * 1000 // 4 hours
 
   function readEventsCache(m: string): Record<string, { name: string; url: string }[]> | null {
     try {

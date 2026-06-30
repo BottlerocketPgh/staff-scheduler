@@ -44,6 +44,9 @@ function getCalendarWeeks(month: string): (string | null)[][] {
   return weeks
 }
 
+const CACHE_KEY = 'od_events_v5'
+const CACHE_TTL = 4 * 60 * 60 * 1000
+
 type TimeOffStatus = 'pending' | 'approved' | 'denied'
 type TimeOffRequest = { date: string; status: TimeOffStatus; note: string | null }
 
@@ -64,9 +67,6 @@ export default function MySchedulePage() {
   const debounceRef = useRef<ReturnType<typeof setTimeout>>()
   const today = new Date().toISOString().split('T')[0]
   const monthOptions = getMonthOptions()
-
-  const CACHE_KEY = 'od_events_v5'
-  const CACHE_TTL = 4 * 60 * 60 * 1000
 
   function readEventsCache(m: string): Record<string, { name: string; url: string }[]> | null {
     try {

@@ -24,7 +24,7 @@ export async function GET(req: NextRequest) {
     supabase.from('confirmed_months').select('month').eq('month', month).maybeSingle(),
   ])
 
-  if (availRes.error || staffRes.error || assignRes.error) {
+  if (availRes.error || staffRes.error || assignRes.error || confirmRes.error) {
     return NextResponse.json({ error: 'DB error' }, { status: 500 })
   }
 
