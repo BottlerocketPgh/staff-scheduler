@@ -45,7 +45,7 @@ export async function textSchedulePublished(phone: string, name: string, dates: 
   const [y, m] = sorted[0].split('-').map(Number)
   const monthLabel = new Date(y, m - 1, 1).toLocaleDateString('en-US', { month: 'long' })
   const dateList = sorted.map(fmtDate).join('\n')
-  await send(phone, `Hi ${name},\n\nThe Bottlerocket schedule for ${monthLabel} is complete. You are currently scheduled for:\n${dateList}\n\nYou'll get a reminder 2 days before each show. To view your schedule, see show info, and to add shifts to your Google Calendar; please visit ${APP_URL}/my-schedule\n\nReply STOP to opt out.`)
+  await send(phone, `Hi ${name},\n\nThe Bottlerocket schedule for ${monthLabel} is complete. You are currently scheduled for:\n${dateList}\n\nYou'll get a reminder 1 day before each show. To view your schedule, see show info, and to add shifts to your Google Calendar; please visit ${APP_URL}/my-schedule\n\nReply STOP to opt out.`)
 }
 
 export async function textTimeOffToAdmin(staffName: string, date: string, note: string | null) {
