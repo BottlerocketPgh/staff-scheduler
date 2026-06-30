@@ -16,11 +16,12 @@ export async function GET(req: NextRequest) {
   const start = `${month}-01`
   const end = new Date(year, monthNum, 0).toISOString().split('T')[0]
 
-  const [availRes, staffRes, assignRes, confirmRes] = await Promise.all([
+  const [availRes, staffRes, assignRes, confirmRes, confirmedMonthRes] = await Promise.all([
     supabase.from('availability').select('staff_name, date').gte('date', start).lte('date', end),
     supabase.from('staff').select('name, priority_order, is_new').eq('active', true).order('priority_order'),
     supabase.from('assignments').select('date, staff_name').gte('date', start).lte('date', end),
     supabase.from('shift_confirmations').select('date, status').gte('date', start).lte('date', end),
+    supabase.from('confirmed_months').select('month').eq('month', month).maybeSingle(),
   ])
 
   if (availRes.error || staffRes.error || assignRes.error) {
@@ -61,5 +62,5 @@ export async function GET(req: NextRequest) {
     }
   }
 
-  return NextResponse.json(result)
+  return NextResponse.json({ days: result, confirmed: !!confirmedMonthRes.data })
 }

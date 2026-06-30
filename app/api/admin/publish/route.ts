@@ -49,5 +49,7 @@ export async function POST(req: NextRequest) {
     sent++
   }
 
+  await supabase.from('confirmed_months').upsert({ month, confirmed_at: new Date().toISOString() }, { onConflict: 'month' })
+
   return NextResponse.json({ sent, missing })
 }

@@ -164,19 +164,8 @@ function ScheduleTab() {
     } catch {}
   }
 
-  function readConfirmedCache(m: string): { sent: number; missing: string[] } | null {
-    try {
-      const raw = localStorage.getItem(`confirmed_${m}`)
-      return raw ? JSON.parse(raw) : null
-    } catch { return null }
-  }
-
-  function writeConfirmedCache(m: string, result: { sent: number; missing: string[] }) {
-    try { localStorage.setItem(`confirmed_${m}`, JSON.stringify(result)) } catch {}
-  }
-
   function loadMonth(m: string) {
-    setSendResult(readConfirmedCache(m))
+    setSendResult(null)
     setSelectedDate(null)
     setLoading(true)
     setConfirmedAssignments(null)
@@ -206,7 +195,15 @@ function ScheduleTab() {
       fetch(`/api/no-tech?month=${m}`).then((r) => r.json()),
     ])
       .then(([monthData, subs, staffList, noTechList]) => {
-        setData(monthData)
+        setData(monthData.days)
+        if (monthData.confirmed) {
+          setSendResult({ sent: 0, missing: [] })
+          const snapshot: Record<string, string | null> = {}
+          for (const [date, day] of Object.entries(monthData.days as MonthData)) {
+            snapshot[date] = day.assigned ?? null
+          }
+          setConfirmedAssignments(snapshot)
+        }
         setSubmissions(Array.isArray(subs) ? subs : [])
         setAllStaff((staffList as { name: string }[]).map((s) => s.name))
         setNoTechDates(new Set(noTechList as string[]))
@@ -241,7 +238,6 @@ function ScheduleTab() {
     })
     const result = await res.json()
     setSendResult(result)
-    writeConfirmedCache(month, result)
     setSending(false)
     setConfirmedAssignments(snapshotAssignments())
     // Auto-unlock all submissions for this month after publishing
