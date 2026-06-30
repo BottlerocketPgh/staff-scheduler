@@ -36,9 +36,8 @@ export async function textOptIn(phone: string, name: string) {
 }
 
 export async function textShiftReminder(phone: string, name: string, date: string, token: string) {
-  const yesUrl = `${APP_URL}/confirm/${token}/yes`
-  const noUrl  = `${APP_URL}/confirm/${token}/no`
-  await send(phone, `Hey ${name} — you're on tech at Bottlerocket ${fmtDate(date)}. Still good?\nYES: ${yesUrl}\nCan't make it: ${noUrl}\nReply STOP to opt out.`)
+  const noUrl = `${APP_URL}/confirm/${token}/no`
+  await send(phone, `Hey ${name} — you're on tech at Bottlerocket ${fmtDate(date)}. Still good? Reply YES to confirm or NO if you can't make it: ${noUrl}\nReply STOP to opt out.`)
 }
 
 export async function textSchedulePublished(phone: string, name: string, dates: string[]) {

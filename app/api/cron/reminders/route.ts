@@ -9,7 +9,7 @@ export async function GET(req: NextRequest) {
   }
 
   const target = new Date()
-  target.setDate(target.getDate() + 2)
+  target.setDate(target.getDate() + 1)
   const targetDate = target.toISOString().split('T')[0]
 
   const { data: assignments } = await supabase

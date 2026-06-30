@@ -48,7 +48,7 @@ export async function POST(req: NextRequest) {
     return twiml("You're confirmed! You'll hear from us when your schedule is ready. Reply STOP at any time to opt out.")
   }
 
-  // YES or NO for sub coverage
+  // YES or NO — check sub claims first, then shift confirmations
   if (isYes || isNo) {
     const { data: claim } = await supabase
       .from('sub_claims')
@@ -59,20 +59,41 @@ export async function POST(req: NextRequest) {
       .limit(1)
       .single()
 
-    if (!claim) return twiml("No pending sub requests found.")
-
-    const newStatus = isYes ? 'claimed' : 'declined'
-    await supabase.from('sub_claims').update({ status: newStatus }).eq('token', claim.token)
-
-    const adminPhone = process.env.ADMIN_PHONE
-    if (adminPhone) {
-      if (isYes) await textSubClaimed(adminPhone, claim.staff_name, claim.absent_staff_name, claim.date)
-      else await textSubDeclined(adminPhone, claim.staff_name, claim.absent_staff_name, claim.date)
+    if (claim) {
+      const newStatus = isYes ? 'claimed' : 'declined'
+      await supabase.from('sub_claims').update({ status: newStatus }).eq('token', claim.token)
+      const adminPhone = process.env.ADMIN_PHONE
+      if (adminPhone) {
+        if (isYes) await textSubClaimed(adminPhone, claim.staff_name, claim.absent_staff_name, claim.date)
+        else await textSubDeclined(adminPhone, claim.staff_name, claim.absent_staff_name, claim.date)
+      }
+      return isYes
+        ? twiml(`Got it — you're covering ${fmtDate(claim.date)}! Thanks.`)
+        : twiml(`Got it, thanks for letting us know.`)
     }
 
-    return isYes
-      ? twiml(`Got it — you're covering ${fmtDate(claim.date)}! Thanks.`)
-      : twiml(`Got it, thanks for letting us know.`)
+    // Fall through to shift confirmation
+    const { data: shiftConfirm } = await supabase
+      .from('shift_confirmations')
+      .select('*')
+      .eq('staff_name', staff.name)
+      .eq('status', 'pending')
+      .order('date', { ascending: true })
+      .limit(1)
+      .single()
+
+    if (shiftConfirm) {
+      const newStatus = isYes ? 'confirmed' : 'cancelled'
+      await supabase.from('shift_confirmations').update({
+        status: newStatus,
+        responded_at: new Date().toISOString(),
+      }).eq('token', shiftConfirm.token)
+      return isYes
+        ? twiml(`You're confirmed — see you at Bottlerocket on ${fmtDate(shiftConfirm.date)}!`)
+        : twiml(`Got it — we'll find someone else for ${fmtDate(shiftConfirm.date)}.`)
+    }
+
+    return twiml("No pending requests found.")
   }
 
   return twiml()
