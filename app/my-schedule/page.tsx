@@ -56,6 +56,7 @@ export default function MySchedulePage() {
   const [assignments, setAssignments] = useState<Record<string, string>>({})
   const [timeOffRequests, setTimeOffRequests] = useState<TimeOffRequest[]>([])
   const [events, setEvents] = useState<Record<string, { name: string; url: string }[]>>({})
+  const [scheduleConfirmed, setScheduleConfirmed] = useState<boolean | null>(null)
   const [loading, setLoading] = useState(false)
   const [requestingDate, setRequestingDate] = useState<string | null>(null)
   const [noteInput, setNoteInput] = useState('')
@@ -114,12 +115,14 @@ export default function MySchedulePage() {
     Promise.all([
       fetch(`/api/assignments?month=${month}`).then(r => r.json()),
       fetch(`/api/time-off?name=${encodeURIComponent(confirmedName)}&month=${month}`).then(r => r.json()),
+      fetch(`/api/confirmed-months?month=${month}`).then(r => r.json()),
     ])
-      .then(([assignRows, timeOffRows]) => {
+      .then(([assignRows, timeOffRows, confirmedData]) => {
         const map: Record<string, string> = {}
         for (const row of assignRows as { date: string; staff_name: string }[]) map[row.date] = row.staff_name
         setAssignments(map)
         setTimeOffRequests(timeOffRows as TimeOffRequest[])
+        setScheduleConfirmed(confirmedData.confirmed ?? false)
       })
       .finally(() => setLoading(false))
   }, [confirmedName, month])
@@ -222,6 +225,17 @@ export default function MySchedulePage() {
               {monthOptions.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
             </select>
           </div>
+
+          {scheduleConfirmed !== null && (
+            <div className={`flex items-center gap-2 text-sm px-3 py-2 rounded-lg mb-4 ${
+              scheduleConfirmed
+                ? 'bg-steel/10 text-steel-dark'
+                : 'bg-honey/15 text-honey-dark'
+            }`}>
+              <span className={`w-2 h-2 rounded-full shrink-0 ${scheduleConfirmed ? 'bg-steel' : 'bg-honey'}`} />
+              {scheduleConfirmed ? 'Schedule confirmed' : 'Schedule pending confirmation'}
+            </div>
+          )}
 
           {loading ? (
             <div className="text-forest/40 text-center py-12">Loading...</div>
