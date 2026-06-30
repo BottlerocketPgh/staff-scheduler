@@ -46,13 +46,20 @@ export async function POST(req: NextRequest) {
   await supabase.from('sub_claims').update({ status: newStatus }).eq('token', token)
 
   if (action === 'claim') {
-    await supabase
-      .from('sub_claims')
-      .update({ status: 'expired' })
-      .eq('date', claim.date)
-      .eq('absent_staff_name', claim.absent_staff_name)
-      .eq('status', 'pending')
-      .neq('token', token)
+    await Promise.all([
+      supabase
+        .from('sub_claims')
+        .update({ status: 'expired' })
+        .eq('date', claim.date)
+        .eq('absent_staff_name', claim.absent_staff_name)
+        .eq('status', 'pending')
+        .neq('token', token),
+      supabase
+        .from('assignments')
+        .update({ staff_name: claim.staff_name })
+        .eq('date', claim.date)
+        .eq('staff_name', claim.absent_staff_name),
+    ])
   }
 
   const adminPhone = process.env.ADMIN_PHONE
