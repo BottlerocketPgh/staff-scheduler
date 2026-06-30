@@ -55,7 +55,7 @@ export async function textTimeOffToAdmin(staffName: string, date: string, note: 
 
 export async function textSubAvailable(phone: string, name: string, absentName: string, date: string, token: string) {
   const url = `${APP_URL}/sub/${token}`
-  await send(phone, `Sub needed at Bottlerocket on ${fmtDate(date)} — ${absentName} can't make it. Can you cover? Let us know: ${url} Reply STOP to opt out.`)
+  await send(phone, `Sub needed at Bottlerocket on ${fmtDate(date)} — ${absentName} can't make it. Can you cover? Reply YES or NO. ${url} Reply STOP to opt out.`)
 }
 
 export async function textSubClaimed(adminPhone: string, claimerName: string, absentName: string, date: string) {
