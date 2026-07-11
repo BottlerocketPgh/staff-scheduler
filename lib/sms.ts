@@ -35,9 +35,9 @@ export async function textOptIn(phone: string, name: string) {
   await send(phone, `Bottlerocket Social Hall: Hi ${name}, you've been added to Flight Deck, our shift scheduling system. You'll receive shift reminders and schedule updates by text. Reply YES to confirm, or STOP to opt out. Msg & data rates may apply. Terms: ${APP_URL}/sms-terms`)
 }
 
-export async function textShiftReminder(phone: string, name: string, date: string, token: string) {
-  const noUrl = `${APP_URL}/confirm/${token}/no`
-  await send(phone, `Hey ${name} — you're on tech at Bottlerocket ${fmtDate(date)}. Still good? Reply YES to confirm or NO if you can't make it: ${noUrl}\nReply STOP to opt out.`)
+export async function textShiftReminder(phone: string, name: string, date: string, eventUrl?: string) {
+  const eventPart = eventUrl ? ` Show info: ${eventUrl}` : ''
+  await send(phone, `Hey ${name} — you're on tech at Bottlerocket ${fmtDate(date)}. Still good? Reply YES to confirm or NO if you can't make it.${eventPart}\nReply STOP to opt out.`)
 }
 
 export async function textSchedulePublished(phone: string, name: string, dates: string[]) {
@@ -57,7 +57,7 @@ export async function textTimeOffToAdmin(staffName: string, date: string, note: 
 
 export async function textSubAvailable(phone: string, name: string, absentName: string, date: string, token: string) {
   const url = `${APP_URL}/sub/${token}`
-  await send(phone, `Sub needed at Bottlerocket on ${fmtDate(date)} — ${absentName} can't make it. Can you cover? Reply YES or NO. ${url} Reply STOP to opt out.`)
+  await send(phone, `Hey ${name} — sub needed at Bottlerocket on ${fmtDate(date)}. ${absentName} can't make it. Can you cover? Reply YES or NO. ${url} Reply STOP to opt out.`)
 }
 
 export async function textSubFilled(phone: string, name: string, date: string) {

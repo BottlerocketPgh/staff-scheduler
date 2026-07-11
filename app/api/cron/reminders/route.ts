@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
 import { textShiftReminder } from '@/lib/sms'
+import { fetchEvents } from '@/lib/opendate'
 import { randomUUID } from 'crypto'
 
 export async function GET(req: NextRequest) {
@@ -18,6 +19,9 @@ export async function GET(req: NextRequest) {
     .eq('date', targetDate)
 
   if (!assignments?.length) return NextResponse.json({ sent: 0 })
+
+  const events = await fetchEvents(targetDate, targetDate)
+  const eventUrl = events[targetDate]?.[0]?.url
 
   let sent = 0
   for (const row of assignments) {
@@ -43,7 +47,7 @@ export async function GET(req: NextRequest) {
       { onConflict: 'date,staff_name' }
     )
 
-    await textShiftReminder(staff.phone, row.staff_name, row.date, token)
+    await textShiftReminder(staff.phone, row.staff_name, row.date, eventUrl)
     sent++
   }
 
