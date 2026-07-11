@@ -35,8 +35,8 @@ export async function textOptIn(phone: string, name: string) {
   await send(phone, `Bottlerocket Social Hall: Hi ${name}, you've been added to Flight Deck, our shift scheduling system. You'll receive shift reminders and schedule updates by text. Reply YES to confirm, or STOP to opt out. Msg & data rates may apply. Terms: ${APP_URL}/sms-terms`)
 }
 
-export async function textShiftReminder(phone: string, name: string, date: string, eventUrl?: string) {
-  const eventPart = eventUrl ? ` Show info: ${eventUrl}` : ''
+export async function textShiftReminder(phone: string, name: string, date: string, eventLinks?: string) {
+  const eventPart = eventLinks ? `\n${eventLinks}` : ''
   await send(phone, `Hey ${name} — you're on tech at Bottlerocket ${fmtDate(date)}. Still good? Reply YES to confirm or NO if you can't make it.${eventPart}\nReply STOP to opt out.`)
 }
 

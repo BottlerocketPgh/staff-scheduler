@@ -21,7 +21,8 @@ export async function GET(req: NextRequest) {
   if (!assignments?.length) return NextResponse.json({ sent: 0 })
 
   const events = await fetchEvents(targetDate, targetDate)
-  const eventUrl = events[targetDate]?.[0]?.url
+  const dayEvents = events[targetDate] ?? []
+  const eventLinks = dayEvents.map((e, i) => `Show ${i + 1}: ${e.url}`).join('\n')
 
   let sent = 0
   for (const row of assignments) {
@@ -47,7 +48,7 @@ export async function GET(req: NextRequest) {
       { onConflict: 'date,staff_name' }
     )
 
-    await textShiftReminder(staff.phone, row.staff_name, row.date, eventUrl)
+    await textShiftReminder(staff.phone, row.staff_name, row.date, eventLinks || undefined)
     sent++
   }
 
